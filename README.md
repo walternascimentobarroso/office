@@ -128,7 +128,7 @@ curl -X POST http://localhost:8000/generate-excel \
     "meta": {
       "empresa": "Teste",
       "nif": "PT123",
-      "mes": "Março 2026"
+      "mes": "3"
     },
     "entries": [
       {
