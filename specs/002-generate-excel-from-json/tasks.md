@@ -13,7 +13,7 @@ Setup phase: Initialize project structure, install dependencies, configure devel
 
 - [ ] T001 Create project directory structure per plan in src/api/routes, src/models, src/services, src/core
 - [ ] T002 [P] Create Python project files: src/__init__.py, src/models/__init__.py, src/services/__init__.py, src/core/__init__.py
-- [ ] T003 Create requirements.txt with FastAPI, uvicorn, openpyxl, pydantic, pytest, pytest-cov in project root
+- [ ] T003 Declare runtime and dev dependencies in pyproject.toml (e.g. FastAPI, uvicorn, openpyxl, pydantic; pytest, pytest-cov in dependency group dev) and manage installs with uv
 - [ ] T004 [P] Create .gitignore for Python project (venv, __pycache__, *.pyc, .pytest_cache, .coverage)
 - [ ] T005 Create pyproject.toml for project metadata and build configuration in project root
 - [ ] T006 [P] Create development environment setup script in .specify/scripts/bash/setup-excel-api.sh with venv initialization
@@ -265,7 +265,7 @@ Deployment, configuration, production checks.
 
 ### Docker Support (Optional)
 
-- [ ] T093 [P] Create Dockerfile for application containerization (Python 3.11 base, requirements install, uvicorn run)
+- [ ] T093 [P] Create Dockerfile for application containerization (Python 3.11 base, install dependencies with uv, uvicorn run)
 - [ ] T094 Create docker-compose.yml for local development (optional)
 
 ### Configuration for Production
@@ -310,7 +310,7 @@ Final quality, cleanup, validation.
 
 ### Dependency Security Scan
 
-- [ ] T111 [P] Run Codacy analysis: check for vulnerabilities in requirements.txt
+- [ ] T111 [P] Run Codacy analysis: check for vulnerabilities in project dependencies (e.g. pyproject.toml / uv.lock)
 - [ ] T112 Update vulnerable dependencies if any identified
 
 ---

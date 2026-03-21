@@ -23,7 +23,8 @@ This API accepts JSON metadata and time-entry data, generates a filled Excel fil
 
 ```bash
 cd /path/to/project
-python -m uvicorn src.main:app --reload
+uv sync
+uv run uvicorn src.main:app --reload
 ```
 
 Service runs at `http://localhost:8000`
@@ -332,22 +333,21 @@ The template is a standard Excel file (XLSX) with:
 ### Prerequisites
 
 - Python 3.11+
-- pip or poetry
+- [uv](https://docs.astral.sh/uv/)
 
 ### Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
-**requirements.txt**:
+With dev dependencies (pytest, etc.):
+
+```bash
+uv sync --group dev
 ```
-fastapi==0.109.0
-uvicorn==0.27.0
-pydantic==2.5.0
-openpyxl==3.11.0
-python-multipart==0.0.6
-```
+
+Dependencies are declared in `pyproject.toml` (and locked with `uv.lock` when present).
 
 ### Project Structure
 
@@ -377,7 +377,7 @@ python-multipart==0.0.6
 │   ├── unit/
 │   ├── integration/
 │   └── contract/
-├── requirements.txt
+├── pyproject.toml
 └── README.md
 ```
 
@@ -388,7 +388,7 @@ python-multipart==0.0.6
 ### Development (with hot reload)
 
 ```bash
-python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Visit `http://localhost:8000/docs` for interactive API documentation (Swagger UI).
@@ -413,21 +413,21 @@ docker run -p 8000:8000 excel-api
 ### Run All Tests
 
 ```bash
-pytest
+uv run pytest
 ```
 
 ### Run Specific Test Suite
 
 ```bash
-pytest tests/unit/             # Unit tests
-pytest tests/integration/      # Integration tests
-pytest tests/contract/         # API contract tests
+uv run pytest tests/unit/             # Unit tests
+uv run pytest tests/integration/      # Integration tests
+uv run pytest tests/contract/         # API contract tests
 ```
 
 ### Run with Coverage
 
 ```bash
-pytest --cov=src --cov-report=html
+uv run pytest --cov=src --cov-report=html
 open htmlcov/index.html
 ```
 
