@@ -30,7 +30,7 @@ class MappingLoader:
         Load footer field to cell mapping from JSON file
 
         Keys are API field names; ``ultimo_dia_util_mes`` is filled automatically
-        (last Mon–Fri of the current month). Other keys map to ``funcionario``.
+        (last Mon–Fri of the report month from ``meta.mes``). Other keys map to ``funcionario``.
         """
         return MappingLoader._load_field_cell_mapping(path, "Footer")
 

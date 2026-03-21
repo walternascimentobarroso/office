@@ -9,8 +9,12 @@ from src.core.exceptions import TemplateLoadError
 class Config:
     """Configuration management for the Excel API service"""
 
-    # Weekend highlighting color (matches template A8)
-    WEEKEND_FILL = "#FFFF00"
+    # Weekend highlighting — openpyxl expects aRGB hex (AARRGGBB), no '#'
+    WEEKEND_FILL = "FFFFFF00"
+    # Holiday highlighting — #f6b26b
+    HOLIDAY_FILL = "FFF6B26B"
+    # Percentagem < 100% — cell background (#fbd4b4)
+    PERCENTAGE_UNDER_100_FILL = "FFFBD4B4"
 
     def __init__(self):
         # Get paths from environment or use defaults

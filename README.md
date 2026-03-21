@@ -1,6 +1,6 @@
 # Excel API
 
-API **FastAPI** que recebe um JSON com metadados, linhas de atividade e (opcionalmente) dados do funcionário, preenche um modelo Excel (`.xlsx`) — cabeçalho, grelha de entradas e bloco inferior do relatório — e devolve o ficheiro gerado.
+API **FastAPI** que recebe um JSON com metadados, linhas de atividade e (opcionalmente) dados do funcionário e feriados a realçar, preenche um modelo Excel (`.xlsx`) — cabeçalho, grelha de entradas e bloco inferior do relatório — e devolve o ficheiro gerado. Após o preenchimento, aplica realce na **coluna A** (dias do mês) para fins de semana e, se indicado, para feriados.
 
 ## Requisitos
 
@@ -61,11 +61,11 @@ O serviço fica em **http://localhost:8000**.
 
 O corpo deve ser um objeto JSON com:
 
-- **`meta`** (objeto, obrigatório): campos opcionais para o cabeçalho do relatório  
+- **`meta`** (objeto, obrigatório): metadados do relatório  
   - `empresa` (string, opcional)  
   - `nif` (string, opcional)  
-  - `mes` (string, opcional) — usado também no nome do ficheiro gerado  
-- **`entries`** (lista, obrigatória; pode ser vazia): cada item é uma linha  
+  - `mes` (inteiro, **obrigatório**) — mês civil **1–12** (cabeçalho, cálculo de fins de semana para realce e nome do ficheiro gerado)  
+- **`entries`** (lista; omissão equivale a lista vazia): cada item é uma linha  
   - `day` (inteiro ou string, opcional)  
   - `description` (string, opcional)  
   - `location` (string, opcional)  
@@ -76,8 +76,11 @@ O corpo deve ser um objeto JSON com:
   - `nome_completo` (string, opcional)  
   - `morada` (string, opcional)  
   - `nif` (string, opcional) — NIF do **funcionário** (distinto do `nif` em `meta`, que é o da empresa no cabeçalho)
+- **`holidays`** (lista de inteiros, opcional; omissão equivale a `[]`): dias do mês (**1–31**) em que a célula da **coluna A** deve ser realçada como feriado. Valores inválidos (`null`, fora do intervalo, etc.) são ignorados.
 
-Além dos campos acima, o preenchimento do **rodapé** inclui sempre a **data do último dia útil** (segunda a sexta) do **mês civil corrente** na célula definida no mapeamento (por omissão **N47**). Não são considerados feriados; apenas fins de semana.
+Além dos campos acima, o preenchimento do **rodapé** inclui sempre a **data do último dia útil** (segunda a sexta) do **mês referido em `meta.mes`** na célula definida no mapeamento (por omissão **N47**). Esse cálculo **não** usa a lista `holidays` nem calendário de feriados oficiais — apenas fins de semana civis.
+
+**Realce na coluna A (linhas 8–38):** só é alterado o preenchimento de fundo da coluna **A** (não são tocadas colunas de fórmulas). Para cada linha, lê-se o dia do mês em **A**; se esse dia estiver em `holidays`, aplica-se a cor de feriado; caso contrário, se for sábado ou domingo no mês indicado em `meta.mes`, aplica-se a cor de fim de semana. **Feriado tem prioridade sobre fim de semana.**
 
 Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no Excel.
 
@@ -85,8 +88,9 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
 
 ```json
 {
-  "meta": {},
-  "entries": []
+  "meta": { "mes": 3 },
+  "entries": [],
+  "holidays": [25]
 }
 ```
 
@@ -97,7 +101,7 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
   "meta": {
     "empresa": "Minha Empresa",
     "nif": "123456789",
-    "mes": "3"
+    "mes": 3
   },
   "entries": [
     {
@@ -113,7 +117,8 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
     "nome_completo": "Eu Santos",
     "morada": "Rua Exemplo, 100, Lisboa",
     "nif": "987654321"
-  }
+  },
+  "holidays": [5, 25]
 }
 ```
 
@@ -128,7 +133,7 @@ curl -X POST http://localhost:8000/generate-excel \
     "meta": {
       "empresa": "Teste",
       "nif": "PT123",
-      "mes": "3"
+      "mes": 3
     },
     "entries": [
       {
@@ -144,7 +149,8 @@ curl -X POST http://localhost:8000/generate-excel \
       "nome_completo": "João Costa",
       "morada": "Av. Central 50",
       "nif": "222333444"
-    }
+    },
+    "holidays": [5, 25]
   }' \
   -o relatorio.xlsx
 ```
@@ -166,7 +172,7 @@ curl -X POST http://localhost:8000/generate-excel \
 
 ### Erros comuns
 
-- **400**: corpo inválido (falta `meta`, etc.) — resposta JSON com detalhes de validação  
+- **422**: corpo JSON inválido ou que não cumpre o modelo (ex.: `mes` em falta ou fora de 1–12) — resposta JSON com detalhes de validação  
 - **500**: template ou mapeamentos em falta / inválidos — resposta JSON com mensagem de erro  
 
 ## Configuração
@@ -201,3 +207,4 @@ Ou: `make test`.
 ## Documentação adicional
 
 - Guia rápido detalhado: [specs/002-generate-excel-from-json/quickstart.md](specs/002-generate-excel-from-json/quickstart.md)
+- Realce de fins de semana e feriados (contrato e comportamento): [specs/003-weekend-highlighting/spec.md](specs/003-weekend-highlighting/spec.md)

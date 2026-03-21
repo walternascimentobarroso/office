@@ -214,15 +214,15 @@ class TestGenerateExcelEndpoint:
         
         # Check weekend rows are highlighted (March 2026 weekends: 1,7,8,14,15,21,22,28,29)
         weekend_days = {1, 7, 8, 14, 15, 21, 22, 28, 29}
-        fill_color = "FFD9D9D9"  # Configured weekend fill color
+        fill_color = "FFFFFF00"  # Matches Config.WEEKEND_FILL (yellow)
         
         for row in range(8, 39):  # Rows 8-38
             day_value = ws[f"A{row}"].value
             if day_value in weekend_days:
-                # Check that columns A, B, D, E, J have the fill color
-                for col in ["A", "B", "D", "E", "J"]:
-                    cell = ws[f"{col}{row}"]
-                    assert cell.fill.start_color.rgb == fill_color, f"Cell {col}{row} should be highlighted for weekend day {day_value}"
+                cell = ws[f"A{row}"]
+                assert cell.fill.start_color.rgb == fill_color, (
+                    f"Cell A{row} should be highlighted for weekend day {day_value}"
+                )
 
     def test_filename_includes_mes(self, client):
         """Test filename includes mes field"""

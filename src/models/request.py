@@ -58,5 +58,23 @@ class GenerateExcelRequest(BaseModel):
     meta: Meta
     entries: list[Entry] = []
     funcionario: Optional[Funcionario] = None
+    holidays: list[int] = []
 
     model_config = ConfigDict(extra="ignore")
+
+    @field_validator("holidays", mode="before")
+    @classmethod
+    def normalize_holidays(cls, value: object) -> list[int]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            return []
+        out: list[int] = []
+        for item in value:
+            if item is None:
+                continue
+            if isinstance(item, bool):
+                continue
+            if isinstance(item, int) and 1 <= item <= 31:
+                out.append(item)
+        return out

@@ -5,12 +5,13 @@ import pytest
 import tempfile
 import json
 import os
+from datetime import date
 from pathlib import Path
 from openpyxl import Workbook
 from src.core.config import Config
 from src.core.exceptions import TemplateLoadError, ExcelWriteError
 from src.services.excel_service import ExcelService
-from src.core.business_calendar import last_weekday_of_current_month
+from src.core.business_calendar import last_weekday_of_month
 from src.models.request import GenerateExcelRequest, Meta, Entry, Funcionario
 
 
@@ -276,6 +277,29 @@ class TestExcelServiceFillRows:
 
         assert ws["K9"].value == 0.75
         assert ws["K9"].number_format == "0%"
+        assert ws["K9"].fill.start_color.rgb == temp_config.PERCENTAGE_UNDER_100_FILL
+
+    def test_fill_rows_percentagem_100_no_underfill_color(self, temp_config):
+        """100% does not apply the under-100 highlight on the Percentagem cell."""
+        service = ExcelService(temp_config)
+        workbook = service.load_template()
+        ws = workbook.active
+        entries = [
+            Entry(
+                day=1,
+                description="Meeting",
+                location="Office",
+                start_time="09:00",
+                end_time="10:00",
+                percentagem=100,
+            )
+        ]
+
+        service._fill_rows(workbook, entries)
+
+        assert ws["K9"].value == 1.0
+        assert ws["K9"].number_format == "0%"
+        assert ws["K9"].fill.start_color.rgb != temp_config.PERCENTAGE_UNDER_100_FILL
 
     def test_fill_rows_multiple_entries(self, temp_config):
         """Test filling multiple entries"""
@@ -330,12 +354,12 @@ class TestExcelServiceFillFooter:
     """Tests for footer block (mapping + computed last weekday)."""
 
     def test_fill_footer_computed_date_and_funcionario(self, temp_config):
-        """N47 gets last weekday of month; funcionario fields map per footer_mapping."""
+        """N47 gets last weekday of meta.mes (same calendar year as generation)."""
         service = ExcelService(temp_config)
         workbook = service.load_template()
         ws = workbook.active
         request = GenerateExcelRequest(
-            meta={},
+            meta={"mes": 10},
             entries=[],
             funcionario=Funcionario(
                 nome_completo="João Silva",
@@ -346,7 +370,10 @@ class TestExcelServiceFillFooter:
 
         service._fill_footer(workbook, request)
 
-        assert ws["N47"].value == last_weekday_of_current_month()
+        assert ws["N47"].value == last_weekday_of_month(
+            date.today().year,
+            request.meta.mes,
+        )
         assert ws["B42"].value == "João Silva"
         assert ws["B43"].value == "Rua A, 1"
         assert ws["D44"].value == "123456789"
@@ -468,9 +495,7 @@ class TestExcelServiceWeekendHighlighting:
         for row in range(8, 39):  # Rows 8-38
             day_value = ws[f"A{row}"].value
             if day_value in weekend_days:
-                for col in ["A", "B", "D", "E", "J"]:
-                    cell = ws[f"{col}{row}"]
-                    assert cell.fill.start_color.rgb == fill_color
+                assert ws[f"A{row}"].fill.start_color.rgb == fill_color
 
     @pytest.mark.asyncio
     async def test_weekend_highlighting_february_28_days(self, temp_config):
@@ -496,9 +521,7 @@ class TestExcelServiceWeekendHighlighting:
         for row in range(8, 36):  # Rows 8-35 (28 days)
             day_value = ws[f"A{row}"].value
             if day_value in weekend_days:
-                for col in ["A", "B", "D", "E", "J"]:
-                    cell = ws[f"{col}{row}"]
-                    assert cell.fill.start_color.rgb == fill_color
+                assert ws[f"A{row}"].fill.start_color.rgb == fill_color
 
     @pytest.mark.asyncio
     async def test_weekend_highlighting_month_starting_saturday(self, temp_config):
@@ -524,9 +547,7 @@ class TestExcelServiceWeekendHighlighting:
         for row in range(8, 39):  # Rows 8-38
             day_value = ws[f"A{row}"].value
             if day_value in weekend_days:
-                for col in ["A", "B", "D", "E", "J"]:
-                    cell = ws[f"{col}{row}"]
-                    assert cell.fill.start_color.rgb == fill_color
+                assert ws[f"A{row}"].fill.start_color.rgb == fill_color
 
     @pytest.mark.asyncio
     async def test_no_data_or_formula_changes(self, temp_config):
@@ -554,4 +575,69 @@ class TestExcelServiceWeekendHighlighting:
         assert ws["D9"].value == "Office"  # location
         assert ws["E9"].value == "09:00"  # start_time
         assert ws["J9"].value == "17:00"  # end_time
-        assert ws["K9"].value == 100  # percentagem
+        assert ws["K9"].value == 1.0  # percentagem stored as fraction for Excel %
+        assert ws["K9"].fill.start_color.rgb != temp_config.PERCENTAGE_UNDER_100_FILL
+
+    @pytest.mark.asyncio
+    async def test_holiday_highlighting_column_a(self, temp_config):
+        """Holidays list highlights column A with HOLIDAY_FILL (#f6b26b)."""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 3},
+            entries=[{"day": 10, "description": "x"}],
+            holidays=[10],
+        )
+
+        stream = await service.generate(request)
+
+        from io import BytesIO
+        from openpyxl import load_workbook
+
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+
+        assert ws["A9"].value == 10
+        assert ws["A9"].fill.start_color.rgb == temp_config.HOLIDAY_FILL
+
+    @pytest.mark.asyncio
+    async def test_holiday_priority_over_weekend(self, temp_config):
+        """When a day is both weekend and holiday, holiday color wins on column A."""
+        service = ExcelService(temp_config)
+        # March 15, 2026 is Sunday
+        request = GenerateExcelRequest(
+            meta={"mes": 3},
+            entries=[{"day": 15, "description": "x"}],
+            holidays=[15],
+        )
+
+        stream = await service.generate(request)
+
+        from io import BytesIO
+        from openpyxl import load_workbook
+
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+
+        assert ws["A9"].value == 15
+        assert ws["A9"].fill.start_color.rgb == temp_config.HOLIDAY_FILL
+        assert ws["A9"].fill.start_color.rgb != temp_config.WEEKEND_FILL
+
+    @pytest.mark.asyncio
+    async def test_holidays_invalid_days_ignored(self, temp_config):
+        """Out-of-range and null holiday entries are ignored; valid days still apply."""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 3},
+            entries=[{"day": 11, "description": "x"}],
+            holidays=[None, 0, 32, 11],
+        )
+
+        stream = await service.generate(request)
+
+        from io import BytesIO
+        from openpyxl import load_workbook
+
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+
+        assert ws["A9"].fill.start_color.rgb == temp_config.HOLIDAY_FILL

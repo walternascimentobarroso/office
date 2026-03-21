@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Excel service for generating Excel files from JSON input"""
 
+from datetime import date
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Optional, List
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 import logging
 
-from src.core.business_calendar import last_weekday_of_current_month
+from src.core.business_calendar import last_weekday_of_month
 from src.core.config import Config
 from src.core.mapping import MappingLoader
 from src.core.exceptions import TemplateLoadError, ExcelWriteError
@@ -116,6 +117,12 @@ class ExcelService:
                             # API sends 0–100; Excel % format expects a fraction (75 → 0.75 → displays as 75%).
                             cell.value = value / 100
                             cell.number_format = "0%"
+                            if value < 100:
+                                cell.fill = PatternFill(
+                                    start_color=self.config.PERCENTAGE_UNDER_100_FILL,
+                                    end_color=self.config.PERCENTAGE_UNDER_100_FILL,
+                                    fill_type="solid",
+                                )
                         else:
                             cell.value = value
                         logger.debug(
@@ -151,7 +158,10 @@ class ExcelService:
             filled_cells = 0
             for field, cell_address in self.footer_mapping.items():
                 if field == "ultimo_dia_util_mes":
-                    ws[cell_address] = last_weekday_of_current_month()
+                    ws[cell_address] = last_weekday_of_month(
+                        date.today().year,
+                        request.meta.mes,
+                    )
                     filled_cells += 1
                     logger.debug(
                         f"Footer cell filled: {cell_address} = last weekday of month",
@@ -193,32 +203,43 @@ class ExcelService:
             logger.error(f"Error writing Excel to stream: {e}")
             raise ExcelWriteError(f"Failed to write Excel file: {str(e)}")
 
-    def _apply_weekend_styling(self, workbook: Any, weekend_days: set[int]) -> Any:
-        """
-        Apply weekend highlighting to the workbook.
-        
-        Highlights entire rows for weekend days in columns A, B, D, E, J.
-        """
+    def _apply_calendar_styling(
+        self,
+        workbook: Any,
+        weekend_days: set[int],
+        holiday_days: set[int],
+    ) -> Any:
+        """Highlight column A: holidays (#f6b26b) take priority over weekends."""
         ws = workbook.active
-        fill = PatternFill(
+        weekend_fill = PatternFill(
             start_color=self.config.WEEKEND_FILL,
             end_color=self.config.WEEKEND_FILL,
-            fill_type="solid"
+            fill_type="solid",
         )
-        
+        holiday_fill = PatternFill(
+            start_color=self.config.HOLIDAY_FILL,
+            end_color=self.config.HOLIDAY_FILL,
+            fill_type="solid",
+        )
+
         for row in range(8, 39):  # Rows 8 to 38
             day_cell = ws[f"A{row}"]
-            if day_cell.value is not None and isinstance(day_cell.value, int) and day_cell.value in weekend_days:
-                for col in ["A", "B", "D", "E", "J"]:
-                    ws[f"{col}{row}"].fill = fill
-        
+            day_value = day_cell.value
+            if day_value is None or not isinstance(day_value, int):
+                continue
+            if day_value in holiday_days:
+                day_cell.fill = holiday_fill
+            elif day_value in weekend_days:
+                day_cell.fill = weekend_fill
+
         return workbook
 
     async def generate(self, request: GenerateExcelRequest) -> BytesIO:
         """
         Generate Excel file from request data
         
-        Orchestrates: load_template → fill_header → fill_rows → fill_footer → apply_weekend_styling → write_to_stream
+        Orchestrates: load_template → fill_header → fill_rows → fill_footer
+        → apply_calendar_styling → write_to_stream
         """
         try:
             logger.info(
@@ -238,11 +259,12 @@ class ExcelService:
             workbook = self._fill_rows(workbook, request.entries)
             workbook = self._fill_footer(workbook, request)
 
-            # Calculate weekend days for highlighting
-            from datetime import date
             current_year = date.today().year
             weekend_days = DateService.get_weekend_days(request.meta.mes, current_year)
-            workbook = self._apply_weekend_styling(workbook, weekend_days)
+            holiday_days = set(request.holidays)
+            workbook = self._apply_calendar_styling(
+                workbook, weekend_days, holiday_days
+            )
 
             output_stream = self._write_to_stream(workbook)
 
