@@ -26,6 +26,7 @@ def setup_test_environment():
         ws['D8'] = 'Location'
         ws['E8'] = 'Start Time'
         ws['J8'] = 'End Time'
+        ws['K8'] = 'Percentagem'
         wb.save(str(template_path))
         
         # Create mappings
@@ -46,7 +47,8 @@ def setup_test_environment():
                     "description": "B",
                     "location": "D",
                     "start_time": "E",
-                    "end_time": "J"
+                    "end_time": "J",
+                    "percentagem": "K"
                 }
             }, f)
         
@@ -96,7 +98,7 @@ class TestGenerateExcelEndpoint:
         response = client.post("/generate-excel", json={
             "meta": {"empresa": "Test Corp", "nif": "12345", "mes": "March"},
             "entries": [
-                {"day": 1, "description": "Task 1", "location": "Office", "start_time": "09:00", "end_time": "10:00"}
+                {"day": 1, "description": "Task 1", "location": "Office", "start_time": "09:00", "end_time": "10:00", "percentagem": 75}
             ]
         })
         
@@ -131,7 +133,7 @@ class TestGenerateExcelEndpoint:
             "entries": []
         })
         
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error
         assert "meta" in response.text.lower() or "missing" in response.text.lower()
 
     def test_post_missing_entries(self, client):
@@ -235,7 +237,7 @@ class TestDataValidationErrors:
             "entries": []
         })
         
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error
         # Response should indicate what's wrong
 
     def test_invalid_entries_type(self, client):
@@ -245,4 +247,4 @@ class TestDataValidationErrors:
             "entries": "not a list"
         })
         
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error

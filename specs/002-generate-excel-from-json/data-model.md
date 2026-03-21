@@ -50,12 +50,14 @@ class Meta(BaseModel):
 | `location` | string | Optional | Physical location or work location | D | Up to 255 chars |
 | `start_time` | string | Optional | Start time (format user-defined) | E | Recommended HH:MM or ISO format |
 | `end_time` | string | Optional | End time (format user-defined) | J | Recommended HH:MM or ISO format |
+| `percentagem` | integer | Optional | Percentage (0-100) | K | Must be between 0 and 100 |
 
 **Validation Rules**:
 - All fields are optional
 - Extra fields are silently ignored
 - No format validation (preserves user data flexibility)
 - Type coercion: numbers are converted to strings for display
+- `percentagem` must be an integer between 0 and 100 if provided
 
 **Pydantic Schema**:
 ```python
@@ -65,9 +67,16 @@ class Entry(BaseModel):
     location: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
+    percentagem: Optional[int] = None
     
     class Config:
         extra = "ignore"  # Ignore unknown fields
+    
+    @validator('percentagem')
+    def percentagem_must_be_valid(cls, v):
+        if v is not None and (v < 0 or v > 100):
+            raise ValueError('percentagem must be between 0 and 100')
+        return v
 ```
 
 ---

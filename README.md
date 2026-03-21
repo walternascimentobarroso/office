@@ -71,6 +71,7 @@ O corpo deve ser um objeto JSON com:
   - `location` (string, opcional)  
   - `start_time` (string, opcional)  
   - `end_time` (string, opcional)  
+  - `percentagem` (inteiro, opcional): percentagem de 0 a 100  
 
 Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no Excel.
 
@@ -98,7 +99,8 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
       "description": "Reunião",
       "location": "Escritório",
       "start_time": "09:00",
-      "end_time": "10:00"
+      "end_time": "10:00",
+      "percentagem": 75
     }
   ]
 }
@@ -123,7 +125,8 @@ curl -X POST http://localhost:8000/generate-excel \
         "description": "Atividade",
         "location": "Remoto",
         "start_time": "09:00",
-        "end_time": "12:00"
+        "end_time": "12:00",
+        "percentagem": 100
       }
     ]
   }' \

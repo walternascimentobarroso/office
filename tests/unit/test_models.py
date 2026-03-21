@@ -48,13 +48,15 @@ class TestEntry:
             description="Meeting",
             location="Office",
             start_time="09:00",
-            end_time="10:00"
+            end_time="10:00",
+            percentagem=50
         )
         assert entry.day == 1
         assert entry.description == "Meeting"
         assert entry.location == "Office"
         assert entry.start_time == "09:00"
         assert entry.end_time == "10:00"
+        assert entry.percentagem == 50
 
     def test_entry_empty(self):
         """Test Entry with no fields"""
@@ -64,6 +66,7 @@ class TestEntry:
         assert entry.location is None
         assert entry.start_time is None
         assert entry.end_time is None
+        assert entry.percentagem is None
 
     def test_entry_day_as_string(self):
         """Test Entry with day as string"""
@@ -81,6 +84,22 @@ class TestEntry:
         assert entry.description == "Test"
         assert not hasattr(entry, "extra_field")
 
+    def test_entry_percentagem_valid(self):
+        """Test Entry with valid percentagem"""
+        entry = Entry(percentagem=0)
+        assert entry.percentagem == 0
+        entry = Entry(percentagem=100)
+        assert entry.percentagem == 100
+        entry = Entry(percentagem=50)
+        assert entry.percentagem == 50
+
+    def test_entry_percentagem_invalid(self):
+        """Test Entry with invalid percentagem"""
+        with pytest.raises(ValidationError):
+            Entry(percentagem=-1)
+        with pytest.raises(ValidationError):
+            Entry(percentagem=101)
+
 
 class TestGenerateExcelRequest:
     """Tests for GenerateExcelRequest model"""
@@ -90,12 +109,14 @@ class TestGenerateExcelRequest:
         request = GenerateExcelRequest(
             meta={"empresa": "Corp", "nif": "123"},
             entries=[
-                {"day": 1, "description": "Task 1", "location": "Office", "start_time": "09:00", "end_time": "10:00"},
-                {"day": 2, "description": "Task 2", "location": "Home", "start_time": "14:00", "end_time": "16:00"}
+                {"day": 1, "description": "Task 1", "location": "Office", "start_time": "09:00", "end_time": "10:00", "percentagem": 75},
+                {"day": 2, "description": "Task 2", "location": "Home", "start_time": "14:00", "end_time": "16:00", "percentagem": 100}
             ]
         )
         assert len(request.entries) == 2
         assert request.meta.empresa == "Corp"
+        assert request.entries[0].percentagem == 75
+        assert request.entries[1].percentagem == 100
 
     def test_valid_request_empty_entries(self):
         """Test valid request with empty entries"""
