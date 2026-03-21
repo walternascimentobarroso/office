@@ -1,12 +1,12 @@
 # Excel API
 
-API **FastAPI** que recebe um JSON com metadados e linhas de atividade, preenche um modelo Excel (`.xlsx`) e devolve o ficheiro gerado.
+API **FastAPI** que recebe um JSON com metadados, linhas de atividade e (opcionalmente) dados do funcionário, preenche um modelo Excel (`.xlsx`) — cabeçalho, grelha de entradas e bloco inferior do relatório — e devolve o ficheiro gerado.
 
 ## Requisitos
 
 - Python **3.11** ou superior
 - [uv](https://docs.astral.sh/uv/) (gestor de dependências e ambiente)
-- Ficheiros obrigatórios na pasta `templates/` (ver [Configuração](#configuração))
+- Ficheiros obrigatórios na pasta `templates/` e ficheiros de mapeamento JSON (ver [Configuração](#configuração))
 
 ## Instalação
 
@@ -71,7 +71,13 @@ O corpo deve ser um objeto JSON com:
   - `location` (string, opcional)  
   - `start_time` (string, opcional)  
   - `end_time` (string, opcional)  
-  - `percentagem` (inteiro, opcional): percentagem de 0 a 100  
+  - `percentagem` (inteiro, opcional): valor de **0 a 100** enviado no JSON; no Excel a célula é gravada como percentagem (ex.: **75** → **75%**)
+- **`funcionario`** (objeto, opcional): dados para o **rodapé** do modelo (nome, morada e NIF do trabalhador; o mapeamento para células está em `footer_mapping.json`)  
+  - `nome_completo` (string, opcional)  
+  - `morada` (string, opcional)  
+  - `nif` (string, opcional) — NIF do **funcionário** (distinto do `nif` em `meta`, que é o da empresa no cabeçalho)
+
+Além dos campos acima, o preenchimento do **rodapé** inclui sempre a **data do último dia útil** (segunda a sexta) do **mês civil corrente** na célula definida no mapeamento (por omissão **N47**). Não são considerados feriados; apenas fins de semana.
 
 Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no Excel.
 
@@ -91,7 +97,7 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
   "meta": {
     "empresa": "Minha Empresa",
     "nif": "123456789",
-    "mes": "Março 2026"
+    "mes": "3"
   },
   "entries": [
     {
@@ -102,7 +108,12 @@ Campos desconhecidos são **ignorados**. Valores em falta aparecem em branco no 
       "end_time": "10:00",
       "percentagem": 75
     }
-  ]
+  ],
+  "funcionario": {
+    "nome_completo": "Eu Santos",
+    "morada": "Rua Exemplo, 100, Lisboa",
+    "nif": "987654321"
+  }
 }
 ```
 
@@ -128,7 +139,12 @@ curl -X POST http://localhost:8000/generate-excel \
         "end_time": "12:00",
         "percentagem": 100
       }
-    ]
+    ],
+    "funcionario": {
+      "nome_completo": "João Costa",
+      "morada": "Av. Central 50",
+      "nif": "222333444"
+    }
   }' \
   -o relatorio.xlsx
 ```
@@ -160,9 +176,12 @@ Variáveis de ambiente (opcionais; valores por omissão relativos à pasta de tr
 | Variável               | Descrição |
 |------------------------|-----------|
 | `TEMPLATE_PATH`        | Caminho para o `.xlsx` modelo (predefinição: `templates/excel_template.xlsx`) |
-| `HEADER_MAPPING_PATH`  | JSON que mapeia `meta` para células (predefinição: `templates/mappings/header_mapping.json`) |
-| `ROWS_MAPPING_PATH`    | JSON que define linhas e colunas das entradas (predefinição: `templates/mappings/rows_mapping.json`) |
+| `HEADER_MAPPING_PATH`  | JSON que mapeia `meta` para células do cabeçalho (predefinição: `templates/mappings/header_mapping.json`) |
+| `ROWS_MAPPING_PATH`    | JSON que define linha inicial e colunas das entradas na grelha (predefinição: `templates/mappings/rows_mapping.json`) |
+| `FOOTER_MAPPING_PATH`  | JSON que mapeia o rodapé: campos de `funcionario` e a chave especial `ultimo_dia_util_mes` para a data (predefinição: `templates/mappings/footer_mapping.json`) |
 | `LOG_LEVEL`            | Nível de log (ex.: `INFO`) |
+
+Os ficheiros em `templates/mappings/` ligam **nomes de campos** do JSON a **referências de células** do Excel. No rodapé, a chave `ultimo_dia_util_mes` não vem no corpo do pedido: o valor é calculado pelo servidor (último dia útil da semana no mês corrente).
 
 Para usar outro modelo, por exemplo `templates/excel_template2.xlsx`:
 

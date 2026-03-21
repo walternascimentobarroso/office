@@ -5,9 +5,9 @@ from io import BytesIO
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from openpyxl import load_workbook
-from openpyxl.worksheet.worksheet import Worksheet
 import logging
 
+from src.core.business_calendar import last_weekday_of_current_month
 from src.core.config import Config
 from src.core.mapping import MappingLoader
 from src.core.exceptions import TemplateLoadError, ExcelWriteError
@@ -28,6 +28,9 @@ class ExcelService:
         self.rows_mapping = MappingLoader.load_rows_mapping(
             self.config.rows_mapping_path
         )
+        self.footer_mapping = MappingLoader.load_footer_mapping(
+            self.config.footer_mapping_path
+        )
         logger.info(
             "ExcelService initialized",
             extra={
@@ -35,6 +38,7 @@ class ExcelService:
                     "template_path": self.config.template_path,
                     "header_mapping_keys": list(self.header_mapping.keys()),
                     "rows_mapping_keys": list(self.rows_mapping["columns"].keys()),
+                    "footer_mapping_keys": list(self.footer_mapping.keys()),
                 }
             },
         )
@@ -105,7 +109,13 @@ class ExcelService:
                     value = entry_dict.get(field)
                     if value is not None:
                         cell_address = f"{column_letter}{row_number}"
-                        ws[cell_address] = value
+                        cell = ws[cell_address]
+                        if field == "percentagem":
+                            # API sends 0–100; Excel % format expects a fraction (75 → 0.75 → displays as 75%).
+                            cell.value = value / 100
+                            cell.number_format = "0%"
+                        else:
+                            cell.value = value
                         logger.debug(
                             f"Row cell filled: {cell_address} = {value}",
                             extra={
@@ -129,6 +139,42 @@ class ExcelService:
             logger.error(f"Error filling rows: {e}")
             raise ExcelWriteError(f"Failed to fill rows: {str(e)}")
 
+    def _fill_footer(self, workbook: Any, request: GenerateExcelRequest) -> Any:
+        """Fill footer cells from mapping (computed date + optional funcionario)."""
+        try:
+            ws = workbook.active
+            funcionario_dict = (
+                request.funcionario.model_dump() if request.funcionario else {}
+            )
+            filled_cells = 0
+            for field, cell_address in self.footer_mapping.items():
+                if field == "ultimo_dia_util_mes":
+                    ws[cell_address] = last_weekday_of_current_month()
+                    filled_cells += 1
+                    logger.debug(
+                        f"Footer cell filled: {cell_address} = last weekday of month",
+                        extra={"extra_data": {"field": field, "cell": cell_address}},
+                    )
+                    continue
+                value = funcionario_dict.get(field)
+                if value is not None:
+                    ws[cell_address] = value
+                    filled_cells += 1
+                    logger.debug(
+                        f"Footer cell filled: {cell_address} = {value}",
+                        extra={"extra_data": {"field": field, "cell": cell_address}},
+                    )
+
+            logger.info(
+                f"Footer filled: {filled_cells} cells",
+                extra={"extra_data": {"filled_cells": filled_cells}},
+            )
+            return workbook
+
+        except Exception as e:
+            logger.error(f"Error filling footer: {e}")
+            raise ExcelWriteError(f"Failed to fill footer: {str(e)}")
+
     def _write_to_stream(self, workbook: Any) -> BytesIO:
         """Write workbook to BytesIO stream"""
         try:
@@ -149,7 +195,7 @@ class ExcelService:
         """
         Generate Excel file from request data
         
-        Orchestrates: load_template → fill_header → fill_rows → write_to_stream
+        Orchestrates: load_template → fill_header → fill_rows → fill_footer → write_to_stream
         """
         try:
             logger.info(
@@ -167,6 +213,7 @@ class ExcelService:
             workbook = self.load_template()
             workbook = self._fill_header(workbook, request.meta)
             workbook = self._fill_rows(workbook, request.entries)
+            workbook = self._fill_footer(workbook, request)
             output_stream = self._write_to_stream(workbook)
 
             logger.info(

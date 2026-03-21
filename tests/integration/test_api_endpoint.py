@@ -19,8 +19,8 @@ def setup_test_environment():
         wb = Workbook()
         ws = wb.active
         ws['B1'] = None
-        ws['C4'] = None
-        ws['J3'] = None
+        ws['D4'] = None
+        ws['J4'] = None
         ws['A8'] = 'Day'
         ws['B8'] = 'Description'
         ws['D8'] = 'Location'
@@ -34,8 +34,8 @@ def setup_test_environment():
         with open(header_mapping_path, 'w') as f:
             json.dump({
                 "empresa": "B1",
-                "nif": "C4",
-                "mes": "J3"
+                "nif": "D4",
+                "mes": "J4"
             }, f)
         
         rows_mapping_path = Path(tmpdir) / "rows.json"
@@ -51,15 +51,29 @@ def setup_test_environment():
                     "percentagem": "K"
                 }
             }, f)
+
+        footer_mapping_path = Path(tmpdir) / "footer.json"
+        with open(footer_mapping_path, 'w') as f:
+            json.dump(
+                {
+                    "ultimo_dia_util_mes": "N47",
+                    "nome_completo": "B42",
+                    "morada": "B43",
+                    "nif": "D44",
+                },
+                f,
+            )
         
         # Set environment variables for test
         old_template = os.environ.get("TEMPLATE_PATH")
         old_header = os.environ.get("HEADER_MAPPING_PATH")
         old_rows = os.environ.get("ROWS_MAPPING_PATH")
+        old_footer = os.environ.get("FOOTER_MAPPING_PATH")
         
         os.environ["TEMPLATE_PATH"] = str(template_path)
         os.environ["HEADER_MAPPING_PATH"] = str(header_mapping_path)
         os.environ["ROWS_MAPPING_PATH"] = str(rows_mapping_path)
+        os.environ["FOOTER_MAPPING_PATH"] = str(footer_mapping_path)
         
         yield tmpdir
         
@@ -76,6 +90,10 @@ def setup_test_environment():
             os.environ["ROWS_MAPPING_PATH"] = old_rows
         else:
             os.environ.pop("ROWS_MAPPING_PATH", None)
+        if old_footer:
+            os.environ["FOOTER_MAPPING_PATH"] = old_footer
+        else:
+            os.environ.pop("FOOTER_MAPPING_PATH", None)
 
 
 @pytest.fixture

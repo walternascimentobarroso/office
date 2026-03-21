@@ -20,6 +20,9 @@ class Config:
         self.rows_mapping_path = os.getenv(
             "ROWS_MAPPING_PATH", "templates/mappings/rows_mapping.json"
         )
+        self.footer_mapping_path = os.getenv(
+            "FOOTER_MAPPING_PATH", "templates/mappings/footer_mapping.json"
+        )
 
         # Validate paths exist
         self._validate_paths()
@@ -31,6 +34,7 @@ class Config:
             (self.template_path, "Template file"),
             (self.header_mapping_path, "Header mapping file"),
             (self.rows_mapping_path, "Rows mapping file"),
+            (self.footer_mapping_path, "Footer mapping file"),
         ]
 
         for path_str, name in paths_to_check:

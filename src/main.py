@@ -49,6 +49,7 @@ async def startup_event():
                     "template_path": config.template_path,
                     "header_mapping_path": config.header_mapping_path,
                     "rows_mapping_path": config.rows_mapping_path,
+                    "footer_mapping_path": config.footer_mapping_path,
                 }
             },
         )

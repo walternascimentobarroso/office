@@ -60,9 +60,15 @@ async def generate_excel(request: GenerateExcelRequest) -> StreamingResponse:
                 "description": "string (optional)",
                 "location": "string (optional)",
                 "start_time": "string (optional)",
-                "end_time": "string (optional)"
+                "end_time": "string (optional)",
+                "percentagem": "int (optional)"
             }
-        ]
+        ],
+        "funcionario": {
+            "nome_completo": "string (optional)",
+            "morada": "string (optional)",
+            "nif": "string (optional)"
+        }
     }
     
     Returns:

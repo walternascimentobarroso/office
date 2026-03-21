@@ -15,6 +15,16 @@ class Meta(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class Funcionario(BaseModel):
+    """Employee fields for the footer block of the Excel template"""
+
+    nome_completo: Optional[str] = None
+    morada: Optional[str] = None
+    nif: Optional[str] = None
+
+    model_config = ConfigDict(extra="ignore")
+
+
 class Entry(BaseModel):
     """Time/activity entry that maps to a row in Excel"""
 
@@ -40,5 +50,6 @@ class GenerateExcelRequest(BaseModel):
 
     meta: Meta
     entries: list[Entry] = []
+    funcionario: Optional[Funcionario] = None
 
     model_config = ConfigDict(extra="ignore")

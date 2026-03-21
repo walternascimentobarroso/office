@@ -2,7 +2,7 @@
 """Unit tests for Pydantic models"""
 
 import pytest
-from src.models.request import Meta, Entry, GenerateExcelRequest
+from src.models.request import Meta, Entry, GenerateExcelRequest, Funcionario
 from pydantic import ValidationError
 
 
@@ -36,6 +36,24 @@ class TestMeta:
         assert meta.empresa == "Corp"
         assert not hasattr(meta, "unknown_field")
         assert not hasattr(meta, "another_unknown")
+
+
+class TestFuncionario:
+    """Tests for Funcionario model"""
+
+    def test_funcionario_all_fields(self):
+        """Test Funcionario with all fields"""
+        f = Funcionario(nome_completo="Ana Costa", morada="Rua X", nif="999")
+        assert f.nome_completo == "Ana Costa"
+        assert f.morada == "Rua X"
+        assert f.nif == "999"
+
+    def test_funcionario_empty(self):
+        """Test Funcionario with no fields"""
+        f = Funcionario()
+        assert f.nome_completo is None
+        assert f.morada is None
+        assert f.nif is None
 
 
 class TestEntry:
@@ -127,6 +145,21 @@ class TestGenerateExcelRequest:
         """Test valid request with empty meta"""
         request = GenerateExcelRequest(meta={}, entries=[])
         assert request.meta.empresa is None
+
+    def test_valid_request_with_funcionario(self):
+        """Test request with optional funcionario block"""
+        request = GenerateExcelRequest(
+            meta={},
+            entries=[],
+            funcionario={
+                "nome_completo": "Maria",
+                "morada": "Lisboa",
+                "nif": "111",
+            },
+        )
+        assert request.funcionario is not None
+        assert request.funcionario.nome_completo == "Maria"
+        assert request.funcionario.nif == "111"
 
     def test_missing_meta_field(self):
         """Test that missing meta field raises error"""

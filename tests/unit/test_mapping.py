@@ -14,7 +14,7 @@ class TestCellAddressValidation:
 
     def test_valid_cell_addresses(self):
         """Test valid cell addresses"""
-        valid_cells = ["A", "A1", "Z99", "AA1", "B10", "C4", "J3", "ZZ999"]
+        valid_cells = ["A", "A1", "Z99", "AA1", "B10", "D4", "J4", "ZZ999"]
         for cell in valid_cells:
             assert _is_valid_cell_address(cell), f"{cell} should be valid"
 
@@ -33,15 +33,15 @@ class TestHeaderMappingLoader:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             json.dump({
                 "empresa": "B1",
-                "nif": "C4",
-                "mes": "J3"
+                "nif": "D4",
+                "mes": "J4"
             }, f)
             f.flush()
             
             mapping = MappingLoader.load_header_mapping(f.name)
             assert mapping["empresa"] == "B1"
-            assert mapping["nif"] == "C4"
-            assert mapping["mes"] == "J3"
+            assert mapping["nif"] == "D4"
+            assert mapping["mes"] == "J4"
             
             Path(f.name).unlink()
 
@@ -84,6 +84,34 @@ class TestHeaderMappingLoader:
             assert "invalid cell address" in str(exc_info.value).lower()
             
             Path(f.name).unlink()
+
+
+class TestFooterMappingLoader:
+    """Tests for footer mapping loader"""
+
+    def test_load_valid_footer_mapping(self):
+        """Test loading valid footer mapping"""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump({
+                "ultimo_dia_util_mes": "N47",
+                "nome_completo": "B42",
+                "morada": "B43",
+                "nif": "D44",
+            }, f)
+            f.flush()
+
+            mapping = MappingLoader.load_footer_mapping(f.name)
+            assert mapping["ultimo_dia_util_mes"] == "N47"
+            assert mapping["nome_completo"] == "B42"
+            assert mapping["nif"] == "D44"
+
+            Path(f.name).unlink()
+
+    def test_load_footer_mapping_not_found(self):
+        """Test error when footer mapping file not found"""
+        with pytest.raises(MappingError) as exc_info:
+            MappingLoader.load_footer_mapping("/nonexistent/path.json")
+        assert "not found" in str(exc_info.value)
 
 
 class TestRowsMappingLoader:
