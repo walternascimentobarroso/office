@@ -11,7 +11,11 @@ from src.core.business_calendar import last_weekday_of_month
 from src.core.excel_cells import set_cell_value
 from src.core.nif_format_pt import format_nif_pt
 from src.core.utils import load_json_mapping
-from src.services.base_excel_service import BaseExcelService, fill_entry_row_cells
+from src.services.base_excel_service import (
+    BaseExcelService,
+    fill_entry_row_cells,
+    row_for_calendar_entry,
+)
 from src.services.date_service import DateService
 
 logger = logging.getLogger(__name__)
@@ -55,7 +59,7 @@ class MapaDiarioService(BaseExcelService):
         pct_fill = self._config.PERCENTAGE_UNDER_100_FILL
 
         for i, entry in enumerate(entries):
-            row_num = start_row + i
+            row_num = row_for_calendar_entry(start_row, entry, i)
             fill_entry_row_cells(
                 ws,
                 row_num,

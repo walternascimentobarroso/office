@@ -12,7 +12,7 @@ from src.core.excel_cells import set_cell_value
 from src.core.utils import load_json_mapping
 from src.core.nif_format_pt import format_nif_pt
 from src.reports.mapa_km.kms_value import parse_n_kms_value
-from src.services.base_excel_service import BaseExcelService
+from src.services.base_excel_service import BaseExcelService, row_for_calendar_entry
 from src.services.date_service import DateService
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class MapaKmService(BaseExcelService):
         columns = row_mappings.get("columns", {})
 
         for i, entry in enumerate(entries):
-            row_num = start_row + i
+            row_num = row_for_calendar_entry(start_row, entry, i)
             for field, col in columns.items():
                 value = entry.get(field)
                 if value is None:

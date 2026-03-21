@@ -68,6 +68,36 @@ def test_mapa_km_entries_filled_correctly(client):
     assert ws["F9"].value == 363.0
 
 
+def test_mapa_km_entry_maps_to_calendar_day_not_list_order(client):
+    """First JSON entry with day 4 must land on row for dia 4 (start_row 9 → row 12)."""
+    payload = {
+        "meta": {"mes": 3},
+        "entries": [
+            {
+                "day": 4,
+                "origem": "Braga",
+                "destino": "Lisboa",
+                "description": "Deslocação para execução de tarefas",
+                "n_kms": "363,000",
+            }
+        ],
+        "funcionario": {},
+        "holidays": [],
+    }
+
+    response = client.post("/reports/mapa-km", json=payload)
+    assert response.status_code == 200
+
+    wb = load_workbook(BytesIO(response.content))
+    ws = wb.active
+
+    assert ws["A12"].value == 4
+    assert ws["B12"].value == "Braga"
+    assert ws["C12"].value == "Lisboa"
+    assert ws["D12"].value == "Deslocação para execução de tarefas"
+    assert ws["F12"].value == 363.0
+
+
 def test_mapa_km_funcionario_footer_including_vehicle(client):
     """funcionario block fills footer; vehicle_matricula in viatura cell."""
     payload = {

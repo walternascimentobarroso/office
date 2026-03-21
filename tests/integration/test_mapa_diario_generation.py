@@ -73,6 +73,35 @@ def test_mapa_diario_entries_filled_correctly(client):
     assert ws["D8"].value == "Office"
     assert ws["E8"].value == "09:00"
     assert ws["J8"].value == "10:30"
+    assert ws["A9"].value == 2
+    assert ws["B9"].value == "Client call"
+
+
+def test_mapa_diario_entry_maps_to_calendar_day_not_list_order(client):
+    """First JSON entry with day 4 must land on row for dia 4, not dia 1."""
+    payload = {
+        "meta": {"mes": 3},
+        "entries": [
+            {
+                "day": 4,
+                "description": "Deslocação",
+                "location": "Lisboa",
+                "percentagem": 100,
+            }
+        ],
+        "funcionario": {},
+        "holidays": [],
+    }
+
+    response = client.post("/reports/mapa-diario", json=payload)
+    assert response.status_code == 200
+
+    wb = load_workbook(BytesIO(response.content))
+    ws = wb.active
+
+    assert ws["A11"].value == 4
+    assert ws["B11"].value == "Deslocação"
+    assert ws["D11"].value == "Lisboa"
 
 
 def test_mapa_diario_funcionario_footer_filled(client):

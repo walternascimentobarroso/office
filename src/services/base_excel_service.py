@@ -37,6 +37,31 @@ def _coerce_day_of_month(value: object) -> int | None:
     return None
 
 
+def coerce_entry_day(value: object) -> int | None:
+    """Normalize JSON entry ``day`` (int, whole float, or digit string) to 1–31."""
+
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped.isdigit():
+            return None
+        n = int(stripped)
+        return n if 1 <= n <= 31 else None
+    return _coerce_day_of_month(value)
+
+
+def row_for_calendar_entry(
+    start_row: int,
+    entry: Dict[str, Any],
+    fallback_index: int,
+) -> int:
+    """Map entry to the sheet row for that calendar day, else sequential fallback."""
+
+    day = coerce_entry_day(entry.get("day"))
+    if day is not None:
+        return start_row + day - 1
+    return start_row + fallback_index
+
+
 def fill_entry_row_cells(
     ws: Worksheet,
     row_num: int,
