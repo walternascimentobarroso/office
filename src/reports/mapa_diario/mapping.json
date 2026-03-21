@@ -1,0 +1,24 @@
+{
+  "header": {
+    "empresa": "B2",
+    "nif": "B3",
+    "mes": "B4"
+  },
+  "rows": {
+    "start_row": 8,
+    "columns": {
+      "day": "A",
+      "description": "B",
+      "location": "C",
+      "start_time": "D",
+      "end_time": "E",
+      "percentagem": "F"
+    }
+  },
+  "footer": {
+    "nome_completo": "B40",
+    "morada": "B41",
+    "nif": "B42",
+    "ultimo_dia_util_mes": "B43"
+  }
+}

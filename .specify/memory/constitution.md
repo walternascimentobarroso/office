@@ -1,85 +1,81 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles: none
-- Added principles: Conditional styling based on business rules, Deterministic styling, No runtime style reading from template, Configurable reusable styles, Preserve data integrity in styling, Weekend highlighting rule
+- Version change: 1.1.0 → 2.0.0
+- Modified principles: All principles redefined for modular report generation backend
+- Added principles: Report Isolation and Self-Containment, Support for Multiple Report Types, Consistent Excel Generation Pipeline, Reusable Styling Rules, Deterministic Output, JSON as Single Source of Truth, Easy Extensibility, Modular Architecture and Clear Separation of Concerns
 - Added sections: none
 - Removed sections: none
-- Templates requiring updates: .specify/templates/plan-template.md ✅ reviewed, no edits required; .specify/templates/spec-template.md ✅ reviewed, no edits required; .specify/templates/tasks-template.md ✅ reviewed, no edits required
+- Templates requiring updates: .specify/templates/plan-template.md ✅ updated (Constitution Check aligned with new principles); .specify/templates/spec-template.md ✅ reviewed, no edits required; .specify/templates/tasks-template.md ✅ reviewed, no edits required
 - Follow-up TODOs: none
 -->
 
-# Excel Template Service Constitution
+# Excel Report Generation Backend Constitution
 
 ## Core Principles
 
-### 1. JSON is the source of truth
-The service MUST accept structured JSON input as the only authoritative payload. All transformations, validation and mapping MUST be derived from this JSON, not from ad hoc runtime state or file-internal metadata.
+### 1. Report Isolation and Self-Containment
+Each report must be isolated and self-contained (plugin-like structure). Reports must not share business logic directly; shared logic must live in common services.
 
-### 2. Template-driven Excel generation (no in-place mutation)
-Excel output MUST be generated from a clean read-only model of a predefined XLSX template on each request. The system MUST NOT open an existing generated file and mutate it; every output is a fresh file derived from template + mapping + input.
+Rationale: Ensures modularity, prevents tight coupling between report types, and facilitates independent development and maintenance.
 
-### 3. Support fixed header fields and dynamic tabular rows
-Mapping MUST support:
-- fixed fields (header → fixed template cells)
-- dynamic rows (data arrays → execution row + column mapping)
+### 2. Support for Multiple Report Types
+The system must support multiple report types with independent schemas and behaviors.
 
-### 4. Preserve formulas and formatting
-The pipeline MUST preserve all original template cells, including formulas, cell styles, number formats, merged ranges, and conditional formatting, while only injecting values where mapping explicitly says so.
+Rationale: Allows the system to handle diverse reporting needs without monolithic code, enabling specialization and scalability.
 
-### 5. Explicit static/dynamic mapping contract
-Mapping contracts MUST clearly distinguish static cell targets and dynamic row table ranges. Behavioral guarantees:
-- static fields are one-to-one to fixed cell addresses
-- dynamic rows are expanded from a designated start row and column set
-- unbound or unused cells remain unchanged
+### 3. Consistent Excel Generation Pipeline
+Excel generation must follow a consistent pipeline: load template → fill data → apply styles → return file.
 
-### 6. Deterministic output
-Given the same JSON input + template + mapping config, the service MUST produce bitwise consistent Excel output across runs, independent of request timing or non-deterministic system state.
+Rationale: Standardizes the generation process, making it predictable, easier to debug, and maintainable across different reports.
 
-### 7. Statelessness
-The service MUST be stateless. No in-memory session state may affect results. All request context is derived from request payload and template files. Any caching MUST be safe and replicate-only, does not affect correctness.
+### 4. Reusable Styling Rules
+Styling rules (weekends and holidays) must be reusable across all reports.
 
-### 8. Clean, minimal, production-ready code
-Implementation MUST follow clean architecture patterns, use minimal dependencies, and include tests, type validation, and error handling. Production readiness requires logging, error semantics, and clear extension points.
+Rationale: Promotes visual consistency, reduces code duplication, and simplifies updates to styling logic.
 
-### 9. Conditional styling based on business rules
-The system MUST support conditional styling based on business rules. Styling decisions MUST be derived from input data and predefined configuration, ensuring visual enhancements are applied deterministically.
+### 5. Deterministic Output
+The system must be deterministic (same input → same output).
 
-### 10. Deterministic styling
-Styling MUST be deterministic and derived only from input data. Given the same input, the same styles MUST be applied consistently across all generated outputs.
+Rationale: Ensures reliability, testability, and trust in the generated reports.
 
-### 11. No runtime style reading from template
-The system MUST NOT rely on reading styles dynamically from the template at runtime. All styling logic MUST be predefined in configuration or code, not extracted from the template file.
+### 6. JSON as Single Source of Truth
+JSON input is the single source of truth.
 
-### 12. Configurable reusable styles
-Reusable styles (e.g. weekend highlight color) MUST be stored as configuration. Style definitions SHOULD be centralized and reusable across different parts of the system.
+Rationale: Simplifies data validation, transformation, and ensures all operations derive from a consistent data source.
 
-### 13. Preserve data integrity in styling
-Styling MUST not break existing formulas or data integrity. Style applications MUST not alter cell values, formulas, or any data-related properties.
+### 7. Easy Extensibility
+The system must be easily extensible to support new reports.
 
-### 14. Weekend highlighting rule
-Weekend days (Saturday and Sunday) MUST be visually highlighted. The highlight color MUST match the existing style used in cell A8 of the template.
+Rationale: Future-proofs the system, allowing quick addition of new report types without major refactoring.
+
+### 8. Modular Architecture and Clear Separation of Concerns
+The system must follow modular architecture with clear separation of concerns.
+
+Rationale: Improves maintainability, testability, and scalability by organizing code into distinct, focused modules.
 
 ## Non-goals & Constraints
-- No authentication frameworks or authorization checks.
-- No database persistence for templates or generated files.
-- No local filesystem persistence of generated outputs in the core service flow (files are streamed responses).
 
 Technology constraints:
 - Python 3.11+
-- FastAPI for HTTP API
-- openpyxl for Excel template handling
+- FastAPI
+- openpyxl
 
 Non-goals:
-- No PDF conversion, no spreadsheet viewers, no scheduling subsystem.
+- No database (for now)
+- No authentication
+- No async complexity unless necessary
 
 ## Development Workflow
-- Every change MUST include unit tests for JSON mapping, template selection, and formula/formatting preservation.
-- Maintain a CI gate that fails on non-deterministic output or missing mapping contract coverage.
-- Use code review checklists anchored to this constitution: JSON source-of-truth, template immutability, statelessness, and deterministic behavior.
-- Any feature expansion MUST introduce or update a principle section and include corresponding spec tasks.
+
+- Implement modular architecture with clear separation of concerns: reports as plugins, shared services for common logic, dedicated modules for Excel generation pipeline.
+- Ensure each report type has independent schemas, behaviors, and test suites.
+- Maintain deterministic behavior through comprehensive testing and input validation.
+- Use JSON schemas for input validation and documentation.
+- Follow the consistent Excel generation pipeline in all report implementations.
+- Promote reusability of styling rules through centralized configuration and services.
 
 ## Governance
+
 - This constitution is the project's guiding agreement. All design docs, plans, and implementation tasks must trace back to these principles.
 - Amendments require a PR with:
   1. Updated constitution text
@@ -92,6 +88,6 @@ Non-goals:
   - PATCH for clarifications and wording improvements
 - Compliance review schedule:
   - quarterly team review of Constitution alignment
-  - immediate reassessment for any feature that touches template generation mechanics
+  - immediate reassessment for any feature that touches report generation mechanics
 
-**Version**: 1.1.0 | **Ratified**: 2026-03-20 | **Last Amended**: 2026-03-21
+**Version**: 2.0.0 | **Ratified**: 2026-03-20 | **Last Amended**: 2026-03-21

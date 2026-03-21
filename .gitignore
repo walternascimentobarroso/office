@@ -5,6 +5,10 @@ __pycache__
 *.swp
 *.swo
 .venv
+venv/
+dist/
+*.egg-info/
+.pytest_cache/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
@@ -14,3 +18,7 @@ __pycache__
 .cursor/rules/codacy.mdc
 
 .DS_Store
+Thumbs.db
+*.tmp
+.vscode/
+.idea/

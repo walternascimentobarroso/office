@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """FastAPI application for Excel generation API"""
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
@@ -34,6 +34,50 @@ app.add_middleware(
 
 # Include routers
 app.include_router(excel.router)
+
+# New modular report routes
+from src.api.routes import mapa_diario, mapa_km
+app.include_router(mapa_diario.router)
+app.include_router(mapa_km.router)
+
+
+# Exception handlers
+@app.exception_handler(ValidationError)
+async def validation_exception_handler(request, exc: ValidationError):
+    """Handle Pydantic validation errors"""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "ValidationError",
+            "message": "Request validation failed",
+            "details": exc.errors()
+        }
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    """Handle HTTP exceptions"""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": "HTTPError",
+            "message": exc.detail
+        }
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc: Exception):
+    """Handle general exceptions"""
+    logger.error(f"Unhandled exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "InternalError",
+            "message": "An unexpected error occurred"
+        }
+    )
 
 
 @app.on_event("startup")

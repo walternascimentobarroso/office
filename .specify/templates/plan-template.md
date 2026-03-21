@@ -31,7 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- Report Isolation: Does the plan ensure each report is self-contained with plugin-like structure?
+- Multiple Report Support: Does the architecture support independent schemas and behaviors for different report types?
+- Pipeline Consistency: Is the Excel generation following load template → fill data → apply styles → return file?
+- Styling Reusability: Are weekend/holiday styling rules centralized and reusable?
+- Determinism: Will the system produce identical outputs for identical inputs?
+- JSON Source of Truth: Is JSON the single authoritative input source?
+- Extensibility: Can new reports be added easily without major changes?
+- Modularity: Does the design maintain clear separation of concerns and modular architecture?
 
 ## Project Structure
 

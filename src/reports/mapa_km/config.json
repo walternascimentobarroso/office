@@ -1,0 +1,6 @@
+{
+  "template": "template.xlsx",
+  "output_filename_pattern": "relatorio_{mes}_{timestamp}.xlsx",
+  "weekend_color": "F0F0F0",
+  "holiday_color": "FFFFE0"
+}
