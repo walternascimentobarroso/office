@@ -3,7 +3,7 @@
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 import logging
 
 from src.models.request import GenerateExcelRequest
@@ -43,7 +43,7 @@ def _generate_filename(request: GenerateExcelRequest) -> str:
 
 
 @router.post("/generate-excel")
-async def generate_excel(request: GenerateExcelRequest) -> FileResponse:
+async def generate_excel(request: GenerateExcelRequest) -> StreamingResponse:
     """
     Generate Excel file from structured JSON input
     
@@ -97,10 +97,9 @@ async def generate_excel(request: GenerateExcelRequest) -> FileResponse:
         )
 
         # Return file response
-        return FileResponse(
+        return StreamingResponse(
             excel_stream,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            filename=filename,
             headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )
 
