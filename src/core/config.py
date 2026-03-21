@@ -3,11 +3,14 @@
 
 import os
 from pathlib import Path
-from src.core.exceptions import TemplateLoadError, MappingError
+from src.core.exceptions import TemplateLoadError
 
 
 class Config:
     """Configuration management for the Excel API service"""
+
+    # Weekend highlighting color (matches template A8)
+    WEEKEND_FILL = "#FFFF00"
 
     def __init__(self):
         # Get paths from environment or use defaults

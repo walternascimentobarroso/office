@@ -399,7 +399,7 @@ class TestExcelServiceGenerate:
         """Test complete generate workflow"""
         service = ExcelService(temp_config)
         request = GenerateExcelRequest(
-            meta={"empresa": "Acme", "nif": "123", "mes": "March"},
+            meta={"empresa": "Acme", "nif": "123", "mes": 3},
             entries=[
                 {"day": 1, "description": "Task 1"},
                 {"day": 2, "description": "Task 2"}
@@ -439,3 +439,119 @@ class TestExcelServiceGenerate:
         
         assert stream is not None
         assert len(stream.getvalue()) > 0
+
+
+class TestExcelServiceWeekendHighlighting:
+    """Tests for weekend highlighting functionality"""
+
+    @pytest.mark.asyncio
+    async def test_weekend_highlighting_march_31_days(self, temp_config):
+        """Test weekend highlighting for month with 31 days"""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 3},  # March
+            entries=[]
+        )
+        
+        stream = await service.generate(request)
+        
+        # Load generated Excel
+        from io import BytesIO
+        from openpyxl import load_workbook
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+        
+        # March 2026 weekends: 1,7,8,14,15,21,22,28,29
+        weekend_days = {1, 7, 8, 14, 15, 21, 22, 28, 29}
+        fill_color = temp_config.WEEKEND_FILL
+        
+        for row in range(8, 39):  # Rows 8-38
+            day_value = ws[f"A{row}"].value
+            if day_value in weekend_days:
+                for col in ["A", "B", "D", "E", "J"]:
+                    cell = ws[f"{col}{row}"]
+                    assert cell.fill.start_color.rgb == fill_color
+
+    @pytest.mark.asyncio
+    async def test_weekend_highlighting_february_28_days(self, temp_config):
+        """Test weekend highlighting for February (28 days)"""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 2},  # February
+            entries=[]
+        )
+        
+        stream = await service.generate(request)
+        
+        # Load generated Excel
+        from io import BytesIO
+        from openpyxl import load_workbook
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+        
+        # February 2026 weekends: 1,7,8,14,15,21,22,28
+        weekend_days = {1, 7, 8, 14, 15, 21, 22, 28}
+        fill_color = temp_config.WEEKEND_FILL
+        
+        for row in range(8, 36):  # Rows 8-35 (28 days)
+            day_value = ws[f"A{row}"].value
+            if day_value in weekend_days:
+                for col in ["A", "B", "D", "E", "J"]:
+                    cell = ws[f"{col}{row}"]
+                    assert cell.fill.start_color.rgb == fill_color
+
+    @pytest.mark.asyncio
+    async def test_weekend_highlighting_month_starting_saturday(self, temp_config):
+        """Test weekend highlighting when month starts on Saturday"""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 9},  # September 2025 starts on Saturday
+            entries=[]
+        )
+        
+        stream = await service.generate(request)
+        
+        # Load generated Excel
+        from io import BytesIO
+        from openpyxl import load_workbook
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+        
+        # September 2025 weekends: 6,7,13,14,20,21,27,28
+        weekend_days = {6, 7, 13, 14, 20, 21, 27, 28}
+        fill_color = temp_config.WEEKEND_FILL
+        
+        for row in range(8, 39):  # Rows 8-38
+            day_value = ws[f"A{row}"].value
+            if day_value in weekend_days:
+                for col in ["A", "B", "D", "E", "J"]:
+                    cell = ws[f"{col}{row}"]
+                    assert cell.fill.start_color.rgb == fill_color
+
+    @pytest.mark.asyncio
+    async def test_no_data_or_formula_changes(self, temp_config):
+        """Test that weekend highlighting doesn't alter data or formulas"""
+        service = ExcelService(temp_config)
+        request = GenerateExcelRequest(
+            meta={"mes": 3, "empresa": "Test Corp"},
+            entries=[
+                {"day": 1, "description": "Task 1", "location": "Office", "start_time": "09:00", "end_time": "17:00", "percentagem": 100}
+            ]
+        )
+        
+        stream = await service.generate(request)
+        
+        # Load generated Excel
+        from io import BytesIO
+        from openpyxl import load_workbook
+        wb = load_workbook(BytesIO(stream.getvalue()))
+        ws = wb.active
+        
+        # Check that data is preserved
+        assert ws["B1"].value == "Test Corp"  # empresa
+        assert ws["A9"].value == 1  # day
+        assert ws["B9"].value == "Task 1"  # description
+        assert ws["D9"].value == "Office"  # location
+        assert ws["E9"].value == "09:00"  # start_time
+        assert ws["J9"].value == "17:00"  # end_time
+        assert ws["K9"].value == 100  # percentagem

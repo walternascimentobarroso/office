@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-03-21
 
 ## Active Technologies
+- Python 3.11+ + FastAPI, openpyxl (003-weekend-highlighting)
 
 - Python 3.11+ + FastAPI (HTTP API framework), openpyxl (Excel template handling), Pydantic (input validation) (002-generate-excel-from-json)
 
@@ -22,6 +23,7 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.11+: Follow standard conventions
 
 ## Recent Changes
+- 003-weekend-highlighting: Added Python 3.11+ + FastAPI, openpyxl
 
 - 002-generate-excel-from-json: Added Python 3.11+ + FastAPI (HTTP API framework), openpyxl (Excel template handling), Pydantic (input validation)
 

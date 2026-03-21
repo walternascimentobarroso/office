@@ -5,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 import logging
 
 from src.core.business_calendar import last_weekday_of_current_month
@@ -12,6 +13,7 @@ from src.core.config import Config
 from src.core.mapping import MappingLoader
 from src.core.exceptions import TemplateLoadError, ExcelWriteError
 from src.models.request import GenerateExcelRequest, Meta, Entry
+from src.services.date_service import DateService
 
 logger = logging.getLogger(__name__)
 
@@ -191,11 +193,32 @@ class ExcelService:
             logger.error(f"Error writing Excel to stream: {e}")
             raise ExcelWriteError(f"Failed to write Excel file: {str(e)}")
 
+    def _apply_weekend_styling(self, workbook: Any, weekend_days: set[int]) -> Any:
+        """
+        Apply weekend highlighting to the workbook.
+        
+        Highlights entire rows for weekend days in columns A, B, D, E, J.
+        """
+        ws = workbook.active
+        fill = PatternFill(
+            start_color=self.config.WEEKEND_FILL,
+            end_color=self.config.WEEKEND_FILL,
+            fill_type="solid"
+        )
+        
+        for row in range(8, 39):  # Rows 8 to 38
+            day_cell = ws[f"A{row}"]
+            if day_cell.value is not None and isinstance(day_cell.value, int) and day_cell.value in weekend_days:
+                for col in ["A", "B", "D", "E", "J"]:
+                    ws[f"{col}{row}"].fill = fill
+        
+        return workbook
+
     async def generate(self, request: GenerateExcelRequest) -> BytesIO:
         """
         Generate Excel file from request data
         
-        Orchestrates: load_template → fill_header → fill_rows → fill_footer → write_to_stream
+        Orchestrates: load_template → fill_header → fill_rows → fill_footer → apply_weekend_styling → write_to_stream
         """
         try:
             logger.info(
@@ -214,6 +237,13 @@ class ExcelService:
             workbook = self._fill_header(workbook, request.meta)
             workbook = self._fill_rows(workbook, request.entries)
             workbook = self._fill_footer(workbook, request)
+
+            # Calculate weekend days for highlighting
+            from datetime import date
+            current_year = date.today().year
+            weekend_days = DateService.get_weekend_days(request.meta.mes, current_year)
+            workbook = self._apply_weekend_styling(workbook, weekend_days)
+
             output_stream = self._write_to_stream(workbook)
 
             logger.info(

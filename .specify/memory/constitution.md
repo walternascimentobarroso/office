@@ -1,14 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: N/A → 1.0.0
-- Modified principles:
-  - [PRINCIPLE_1_NAME] → JSON Source of Truth
-  - [PRINCIPLE_2_NAME] → Template-Driven Excel Generation
-  - [PRINCIPLE_3_NAME] → Structured Fixed + Dynamic Mapping
-  - [PRINCIPLE_4_NAME] → Preserve Excel Semantics and Style
-  - [PRINCIPLE_5_NAME] → Determinism and Statelessness
-- Added sections: Non-goals & Constraints, Development Workflow
-- Removed sections: no structural removals (template placeholders resolved)
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: none
+- Added principles: Conditional styling based on business rules, Deterministic styling, No runtime style reading from template, Configurable reusable styles, Preserve data integrity in styling, Weekend highlighting rule
+- Added sections: none
+- Removed sections: none
 - Templates requiring updates: .specify/templates/plan-template.md ✅ reviewed, no edits required; .specify/templates/spec-template.md ✅ reviewed, no edits required; .specify/templates/tasks-template.md ✅ reviewed, no edits required
 - Follow-up TODOs: none
 -->
@@ -46,6 +42,24 @@ The service MUST be stateless. No in-memory session state may affect results. Al
 ### 8. Clean, minimal, production-ready code
 Implementation MUST follow clean architecture patterns, use minimal dependencies, and include tests, type validation, and error handling. Production readiness requires logging, error semantics, and clear extension points.
 
+### 9. Conditional styling based on business rules
+The system MUST support conditional styling based on business rules. Styling decisions MUST be derived from input data and predefined configuration, ensuring visual enhancements are applied deterministically.
+
+### 10. Deterministic styling
+Styling MUST be deterministic and derived only from input data. Given the same input, the same styles MUST be applied consistently across all generated outputs.
+
+### 11. No runtime style reading from template
+The system MUST NOT rely on reading styles dynamically from the template at runtime. All styling logic MUST be predefined in configuration or code, not extracted from the template file.
+
+### 12. Configurable reusable styles
+Reusable styles (e.g. weekend highlight color) MUST be stored as configuration. Style definitions SHOULD be centralized and reusable across different parts of the system.
+
+### 13. Preserve data integrity in styling
+Styling MUST not break existing formulas or data integrity. Style applications MUST not alter cell values, formulas, or any data-related properties.
+
+### 14. Weekend highlighting rule
+Weekend days (Saturday and Sunday) MUST be visually highlighted. The highlight color MUST match the existing style used in cell A8 of the template.
+
 ## Non-goals & Constraints
 - No authentication frameworks or authorization checks.
 - No database persistence for templates or generated files.
@@ -80,4 +94,4 @@ Non-goals:
   - quarterly team review of Constitution alignment
   - immediate reassessment for any feature that touches template generation mechanics
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-20 | **Last Amended**: 2026-03-20
+**Version**: 1.1.0 | **Ratified**: 2026-03-20 | **Last Amended**: 2026-03-21

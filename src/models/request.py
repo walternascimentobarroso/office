@@ -10,9 +10,16 @@ class Meta(BaseModel):
 
     empresa: Optional[str] = None
     nif: Optional[str] = None
-    mes: Optional[str] = None
+    mes: int  # Required month (1-12) for weekend highlighting
 
     model_config = ConfigDict(extra="ignore")
+
+    @field_validator('mes')
+    @classmethod
+    def mes_must_be_valid(cls, v):
+        if not isinstance(v, int) or v < 1 or v > 12:
+            raise ValueError('mes must be an integer between 1 and 12')
+        return v
 
 
 class Funcionario(BaseModel):

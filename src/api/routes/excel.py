@@ -35,9 +35,11 @@ def get_excel_service() -> ExcelService:
 
 def _generate_filename(request: GenerateExcelRequest) -> str:
     """Generate filename for Excel output"""
-    mes = request.meta.mes or "report"
+    mes_label = str(request.meta.mes)
     # Sanitize mes for use in filename (remove special chars)
-    mes_safe = "".join(c for c in mes if c.isalnum() or c in (" ", "-", "_"))[:20]
+    mes_safe = "".join(
+        c for c in mes_label if c.isalnum() or c in (" ", "-", "_")
+    )[:20]
     timestamp_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return f"relatorio_{mes_safe}_{timestamp_iso}.xlsx"
 
@@ -52,7 +54,7 @@ async def generate_excel(request: GenerateExcelRequest) -> StreamingResponse:
         "meta": {
             "empresa": "string (optional)",
             "nif": "string (optional)",
-            "mes": "string (optional)"
+            "mes": "int (1-12, required)"
         },
         "entries": [
             {
