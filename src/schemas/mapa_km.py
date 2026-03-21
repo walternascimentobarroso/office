@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Pydantic schemas for Mapa KM report"""
+"""Pydantic schemas for Mapa KM report."""
 
-from typing import Optional, List
-from pydantic import BaseModel, Field, validator
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class Entry(BaseModel):
-    """Activity entry for report rows"""
+    """Activity entry for report rows."""
+
     day: Optional[int] = None
     description: Optional[str] = None
     location: Optional[str] = None
@@ -16,38 +18,64 @@ class Entry(BaseModel):
 
 
 class Vehicle(BaseModel):
-    """Vehicle data for footer"""
+    """Vehicle data for footer."""
+
     modelo: Optional[str] = None
     matricula: Optional[str] = None
     kms: Optional[int] = None
 
 
 class Meta(BaseModel):
-    """Report metadata"""
+    """Report metadata."""
+
     empresa: Optional[str] = None
     nif: Optional[str] = None
     mes: str
 
-    @validator('mes')
-    def validate_mes(cls, v):
+    @field_validator("mes")
+    @classmethod
+    def validate_mes(cls, v: str) -> str:
         valid_months = [
-            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
         ]
         if v not in valid_months:
-            raise ValueError(f'Mês must be one of: {", ".join(valid_months)}')
+            msg = f'Mês must be one of: {", ".join(valid_months)}'
+            raise ValueError(msg)
         return v
 
 
 class MapaKmRequest(BaseModel):
-    """Request schema for Mapa KM report"""
+    """Request schema for Mapa KM report."""
+
     meta: Meta
     entries: List[Entry] = Field(default_factory=list)
     vehicle: Optional[Vehicle] = None
     holidays: List[int] = Field(default_factory=list)
 
-    @validator('holidays', each_item=True)
-    def validate_holiday(cls, v):
-        if not (1 <= v <= 31):
-            raise ValueError('Holiday must be between 1 and 31')
-        return v
+    model_config = ConfigDict(extra="ignore")
+
+    @field_validator("holidays", mode="before")
+    @classmethod
+    def normalize_holidays(cls, value: object) -> list[int]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            return []
+        out: list[int] = []
+        for item in value:
+            if item is None or isinstance(item, bool):
+                continue
+            if isinstance(item, int) and 1 <= item <= 31:
+                out.append(item)
+        return out

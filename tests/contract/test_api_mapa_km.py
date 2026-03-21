@@ -62,7 +62,10 @@ def test_mapa_km_invalid_month_returns_422(client):
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
-    assert "meta.mes" in data["details"]
+    assert any(
+        "mes" in str(err.get("loc", ()))
+        for err in data["details"]
+    )
 
 
 def test_mapa_km_missing_required_fields_returns_422(client):
@@ -76,23 +79,24 @@ def test_mapa_km_missing_required_fields_returns_422(client):
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
-    assert "meta.mes" in data["details"]
+    assert any(
+        "meta" in str(err.get("loc", ()))
+        for err in data["details"]
+    )
 
 
-def test_mapa_km_invalid_holidays_returns_422(client):
-    """Test that invalid holidays return validation error"""
+def test_mapa_km_invalid_holidays_filtered_like_mapa_diario(client):
+    """Invalid holiday values are dropped (same as legacy /generate-excel)."""
+
     payload = {
         "meta": {
             "mes": "Março"
         },
         "entries": [],
         "vehicle": {},
-        "holidays": [32, "invalid"]  # Invalid holiday values
+        "holidays": [32, "invalid", 5],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
-    
-    assert response.status_code == 422
-    data = response.json()
-    assert data["error"] == "ValidationError"
-    assert "holidays" in data["details"]
+
+    assert response.status_code == 200

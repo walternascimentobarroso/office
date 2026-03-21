@@ -41,3 +41,17 @@ class TestDateService:
         # Feb 2024: 1=Thu, 2=Fri, 3=Sat, ..., 29=Thu
         expected = {3, 4, 10, 11, 17, 18, 24, 25}  # Saturdays and Sundays
         assert weekends == expected
+
+    def test_resolve_month_int(self) -> None:
+        assert DateService.resolve_month(7) == 7
+
+    def test_resolve_month_portuguese_name(self) -> None:
+        assert DateService.resolve_month("Março") == 3
+
+    def test_resolve_month_invalid_int(self) -> None:
+        with pytest.raises(ValueError):
+            DateService.resolve_month(13)
+
+    def test_resolve_month_unknown_name(self) -> None:
+        with pytest.raises(ValueError):
+            DateService.resolve_month("NotAMonth")

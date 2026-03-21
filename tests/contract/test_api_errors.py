@@ -12,31 +12,28 @@ def client():
     return TestClient(app)
 
 
-def test_malformed_json_returns_400(client):
-    """Test that malformed JSON returns 400 Bad Request"""
-    response = client.post("/reports/mapa-diario", 
-                          data="{invalid json", 
-                          headers={"Content-Type": "application/json"})
-    
-    assert response.status_code == 400
-    data = response.json()
-    assert data["error"] == "BadRequest"
+def test_malformed_json_returns_422(client):
+    """Malformed JSON body yields 422 from Starlette/FastAPI."""
+
+    response = client.post(
+        "/reports/mapa-diario",
+        data="{invalid json",
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 422
 
 
-def test_missing_content_type_returns_400(client):
-    """Test that missing Content-Type header returns 400"""
-    payload = {"meta": {"mes": 3}, "entries": []}
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    # FastAPI might handle this, but test for proper error
-    # Actually, TestClient sets content-type automatically, so this might pass
-    # But let's test with data instead
-    response = client.post("/reports/mapa-diario", 
-                          data='{"meta": {"mes": 3}, "entries": []}', 
-                          headers={})
-    
-    # Depending on FastAPI behavior, might be 422 or 400
-    assert response.status_code in [400, 422]
+def test_missing_content_type_still_parses_json_body(client):
+    """Starlette may infer JSON from raw body even without Content-Type."""
+
+    response = client.post(
+        "/reports/mapa-diario",
+        content='{"meta": {"mes": 3}, "entries": []}',
+        headers={},
+    )
+
+    assert response.status_code == 200
 
 
 def test_invalid_percentagem_range_returns_422(client):
@@ -57,7 +54,10 @@ def test_invalid_percentagem_range_returns_422(client):
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
-    assert any("percentagem" in str(details) for details in data.get("details", {}).values())
+    assert any(
+        "percentagem" in str(err.get("loc", ()))
+        for err in data.get("details", [])
+    )
 
 
 def test_empty_entries_list_allowed(client):

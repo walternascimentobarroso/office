@@ -1,29 +1,27 @@
 # -*- coding: utf-8 -*-
-"""FastAPI application for Excel generation API"""
+"""FastAPI application for Excel generation API."""
 
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
 import logging
 
-from src.api.routes import excel
-from src.logging_config import setup_logging
-from src.core.config import get_config
-from src.core.exceptions import TemplateLoadError
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-# Setup logging
+from src.api.routes import mapa_diario, mapa_km
+from src.core.config import get_config
+from src.logging_config import setup_logging
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Initialize FastAPI app
 app = FastAPI(
     title="Excel Generation API",
     description="API for generating Excel files from structured JSON input",
     version="1.0.0",
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,121 +30,68 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(excel.router)
-
-# New modular report routes
-from src.api.routes import mapa_diario, mapa_km
 app.include_router(mapa_diario.router)
 app.include_router(mapa_km.router)
 
 
-# Exception handlers
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request, exc: ValidationError):
-    """Handle Pydantic validation errors"""
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    """Align validation errors with contract tests (422 + error/details)."""
+
+    _ = request
     return JSONResponse(
         status_code=422,
         content={
             "error": "ValidationError",
             "message": "Request validation failed",
-            "details": exc.errors()
-        }
-    )
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc: HTTPException):
-    """Handle HTTP exceptions"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": "HTTPError",
-            "message": exc.detail
-        }
-    )
-
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc: Exception):
-    """Handle general exceptions"""
-    logger.error(f"Unhandled exception: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "InternalError",
-            "message": "An unexpected error occurred"
-        }
-    )
-
-
-@app.on_event("startup")
-async def startup_event():
-    """Validate configuration on startup"""
-    try:
-        config = get_config()
-        logger.info("Application started successfully")
-        logger.info(
-            "Configuration loaded",
-            extra={
-                "extra_data": {
-                    "template_path": config.template_path,
-                    "header_mapping_path": config.header_mapping_path,
-                    "rows_mapping_path": config.rows_mapping_path,
-                    "footer_mapping_path": config.footer_mapping_path,
-                }
-            },
-        )
-    except TemplateLoadError as e:
-        logger.critical(f"Startup failed: {e}")
-        raise
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    try:
-        config = get_config()
-        return {
-            "status": "healthy",
-            "service": "excel-generation-api",
-        }
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"status": "unhealthy", "error": str(e)},
-        )
-
-
-@app.exception_handler(ValidationError)
-async def validation_exception_handler(request: Request, exc: ValidationError):
-    """Handle Pydantic validation errors"""
-    logger.warning(f"Validation error: {exc}")
-    errors = []
-    for error in exc.errors():
-        errors.append(
-            {
-                "field": ".".join(str(x) for x in error["loc"]),
-                "issue": error["msg"],
-            }
-        )
-
-    return JSONResponse(
-        status_code=400,
-        content={
-            "error": "ValidationError",
-            "message": "Invalid request body",
-            "status": 400,
-            "details": errors,
+            "details": jsonable_encoder(exc.errors()),
         },
     )
 
 
-@app.get("/docs")
-async def get_docs():
-    """Swagger UI docs"""
-    return app.openapi()
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Handle HTTP exceptions."""
+
+    _ = request
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": "HTTPError", "message": exc.detail},
+    )
+
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Handle uncaught exceptions (last resort)."""
+
+    _ = request
+    logger.error("Unhandled exception: %s", exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "InternalError", "message": "An unexpected error occurred"},
+    )
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Log startup."""
+
+    _ = get_config()
+    logger.info("Application started successfully")
+
+
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    """Health check endpoint."""
+
+    _ = get_config()
+    return {
+        "status": "healthy",
+        "service": "excel-generation-api",
+    }
 
 
 if __name__ == "__main__":

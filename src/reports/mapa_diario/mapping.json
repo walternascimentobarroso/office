@@ -1,8 +1,8 @@
 {
   "header": {
-    "empresa": "B2",
-    "nif": "B3",
-    "mes": "B4"
+    "empresa": "B1",
+    "nif": "D4",
+    "mes": "J4"
   },
   "rows": {
     "start_row": 8,
@@ -12,13 +12,13 @@
       "location": "C",
       "start_time": "D",
       "end_time": "E",
-      "percentagem": "F"
+      "percentagem": "M"
     }
   },
   "footer": {
-    "nome_completo": "B40",
-    "morada": "B41",
-    "nif": "B42",
-    "ultimo_dia_util_mes": "B43"
+    "nome_completo": "B42",
+    "morada": "B43",
+    "nif": "D44",
+    "ultimo_dia_util_mes": "N47"
   }
 }
