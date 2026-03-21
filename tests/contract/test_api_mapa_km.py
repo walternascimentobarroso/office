@@ -3,6 +3,7 @@
 
 import pytest
 from fastapi.testclient import TestClient
+
 from src.main import app
 
 
@@ -18,7 +19,7 @@ def test_mapa_km_valid_request_returns_excel(client):
         "meta": {
             "empresa": "Test Company",
             "nif": "123456789",
-            "mes": "Março"
+            "mes": 3,
         },
         "entries": [
             {
@@ -27,38 +28,40 @@ def test_mapa_km_valid_request_returns_excel(client):
                 "location": "Test location",
                 "start_time": "09:00",
                 "end_time": "10:00",
-                "percentagem": 100
+                "percentagem": 100,
             }
         ],
-        "vehicle": {
-            "modelo": "Test Model",
-            "matricula": "AA-12-BB",
-            "kms": 1000
+        "funcionario": {
+            "nome_completo": "João Costa",
+            "morada": "Av. Central 50",
+            "nif": "222333444",
+            "vehicle_matricula": "34-XY-56",
         },
-        "holidays": [5, 25]
+        "holidays": [5, 25],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
-    
+
     assert response.status_code == 200
-    assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert response.headers["content-type"] == (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     assert "attachment; filename=" in response.headers.get("content-disposition", "")
-    assert b"PK" in response.content  # XLSX files start with PK (ZIP header)
+    assert b"PK" in response.content
 
 
 def test_mapa_km_invalid_month_returns_422(client):
     """Test that invalid month returns validation error"""
     payload = {
         "meta": {
-            "mes": "InvalidMonth"  # Invalid month name
+            "mes": 13,
         },
         "entries": [],
-        "vehicle": {},
-        "holidays": []
+        "holidays": [],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
-    
+
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
@@ -71,11 +74,11 @@ def test_mapa_km_invalid_month_returns_422(client):
 def test_mapa_km_missing_required_fields_returns_422(client):
     """Test that missing required fields return validation error"""
     payload = {
-        "entries": []
-    }  # Missing meta.mes
-    
+        "entries": [],
+    }
+
     response = client.post("/reports/mapa-km", json=payload)
-    
+
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
@@ -90,10 +93,9 @@ def test_mapa_km_invalid_holidays_filtered_like_mapa_diario(client):
 
     payload = {
         "meta": {
-            "mes": "Março"
+            "mes": 3,
         },
         "entries": [],
-        "vehicle": {},
         "holidays": [32, "invalid", 5],
     }
 

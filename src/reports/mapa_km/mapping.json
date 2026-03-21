@@ -1,24 +1,25 @@
 {
   "header": {
-    "empresa": "B2",
-    "nif": "B3",
-    "mes": "B4"
+    "empresa": "A4",
+    "nif": "C6",
+    "mes": "E6"
   },
   "rows": {
-    "start_row": 8,
+    "start_row": 9,
     "columns": {
       "day": "A",
-      "description": "B",
-      "location": "C",
-      "start_time": "D",
-      "end_time": "E",
+      "description": "D",
+      "location": "B",
+      "start_time": "E",
+      "end_time": "C",
       "percentagem": "F"
     }
   },
   "footer": {
-    "modelo": "B40",
-    "matricula": "B41",
-    "kms": "B42",
-    "ultimo_dia_util_mes": "B43"
+    "nome_completo": "B45",
+    "morada": "B46",
+    "nif": "E45",
+    "vehicle_matricula": "E46",
+    "ultimo_dia_util_mes": "B47"
   }
 }

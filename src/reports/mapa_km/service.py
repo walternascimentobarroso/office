@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 class MapaKmService(BaseExcelService):
     """Service for generating Mapa KM Excel reports."""
 
+    def _calendar_style_row_bounds(self) -> tuple[int, int]:
+        """Template lists days 1–28 in column A (rows 9–36)."""
+
+        return (9, 36)
+
     def __init__(self) -> None:
         template_path = "src/reports/mapa_km/template.xlsx"
         super().__init__(template_path)
@@ -30,13 +35,16 @@ class MapaKmService(BaseExcelService):
         meta: Dict[str, Any],
         header_mappings: Dict[str, str],
     ) -> None:
-        """Fill header cells from meta data."""
+        """Fill header cells; ``meta.mes`` (1–12) is written as Portuguese month name in the template."""
 
         for field, cell in header_mappings.items():
             value = meta.get(field)
-            if value is not None:
-                set_cell_value(ws, cell, value)
-                logger.debug("Filled header %s with %s: %s", cell, field, value)
+            if value is None:
+                continue
+            if field == "mes" and isinstance(value, int):
+                value = DateService.month_name_portuguese(value)
+            set_cell_value(ws, cell, value)
+            logger.debug("Filled header %s with %s: %s", cell, field, value)
 
     def fill_rows(
         self,
@@ -46,7 +54,7 @@ class MapaKmService(BaseExcelService):
     ) -> None:
         """Fill data rows from entries."""
 
-        start_row = row_mappings.get("start_row", 8)
+        start_row = row_mappings.get("start_row", 9)
         columns = row_mappings.get("columns", {})
         pct_fill = self._config.PERCENTAGE_UNDER_100_FILL
 
@@ -66,19 +74,19 @@ class MapaKmService(BaseExcelService):
         data: Dict[str, Any],
         footer_mappings: Dict[str, str],
     ) -> None:
-        """Fill footer cells from vehicle data and computed last business day."""
+        """Fill footer from funcionario (incl. vehicle_matricula) and último dia útil."""
 
         month = DateService.resolve_month(data["meta"]["mes"])
         year = date.today().year
-        vehicle = data.get("vehicle") or {}
+        funcionario = data.get("funcionario") or {}
 
         for field, cell in footer_mappings.items():
             if field == "ultimo_dia_util_mes":
                 set_cell_value(ws, cell, last_weekday_of_month(year, month))
                 logger.debug("Filled footer %s with ultimo_dia_util_mes", cell)
                 continue
-            if isinstance(vehicle, dict):
-                value = vehicle.get(field)
+            if isinstance(funcionario, dict):
+                value = funcionario.get(field)
                 if value is not None:
                     set_cell_value(ws, cell, value)
                     logger.debug("Filled footer %s with %s: %s", cell, field, value)

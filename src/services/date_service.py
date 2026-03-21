@@ -19,6 +19,10 @@ _PT_MONTH_NAMES = {
     "Dezembro": 12,
 }
 
+_PT_MONTH_NAMES_BY_NUM = tuple(
+    name for name, _ in sorted(_PT_MONTH_NAMES.items(), key=lambda x: x[1])
+)
+
 
 class DateService:
     """Service for date-related calculations."""
@@ -40,6 +44,15 @@ class DateService:
             return num
         msg = "mes must be int (1–12) or a Portuguese month name"
         raise TypeError(msg)
+
+    @staticmethod
+    def month_name_portuguese(month: int) -> str:
+        """Portuguese month label for Excel (1 = Janeiro, …, 12 = Dezembro)."""
+
+        if not 1 <= month <= 12:
+            msg = "month must be an integer between 1 and 12"
+            raise ValueError(msg)
+        return _PT_MONTH_NAMES_BY_NUM[month - 1]
 
     @staticmethod
     def get_weekend_days(month: int, year: int) -> set[int]:

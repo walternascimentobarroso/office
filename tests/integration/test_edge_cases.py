@@ -145,17 +145,15 @@ def test_month_boundary_cases(client):
     assert response.status_code == 200
 
 
-def test_km_month_portuguese_names(client):
-    """Test all valid Portuguese month names for mapa-km"""
-    months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
-              "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
-    
-    for month in months:
+def test_km_month_integers_1_to_12(client):
+    """Mapa KM accepts meta.mes as 1–12 like Mapa Diário."""
+
+    for month in range(1, 13):
         payload = {
             "meta": {"mes": month},
             "entries": [],
-            "vehicle": {},
-            "holidays": []
+            "funcionario": {},
+            "holidays": [],
         }
         response = client.post("/reports/mapa-km", json=payload)
         assert response.status_code == 200, f"Failed for month {month}"

@@ -1,6 +1,6 @@
 # Excel API
 
-API **FastAPI** que gera ficheiros Excel (`.xlsx`) a partir de JSON: relatórios **Mapa Diário** (`/reports/mapa-diario`) e **Mapa KM** (`/reports/mapa-km`). O **Mapa Diário** substitui o antigo `/generate-excel`: realce na **coluna A** (dias do mês) para fins de semana e feriados, percentagens no modelo, rodapé com último dia útil, e nome de ficheiro `relatorio_<mês>_<timestamp_utc>.xlsx`.
+API **FastAPI** que gera ficheiros Excel (`.xlsx`) a partir de JSON: relatórios **Mapa Diário** (`/reports/mapa-diario`) e **Mapa KM** (`/reports/mapa-km`). O **Mapa Diário** substitui o antigo `/generate-excel`: realce na **coluna A** (dias do mês) para fins de semana e feriados, percentagens no modelo, rodapé com último dia útil, e nome de ficheiro `relatorio_<mês>_<timestamp_utc>.xlsx`. O **Mapa KM** usa o **mesmo JSON** que o Mapa Diário; em `funcionario` pode ir também **`vehicle_matricula`** (matrícula).
 
 ## Requisitos
 
@@ -147,15 +147,20 @@ curl -X POST http://localhost:8000/reports/mapa-diario \
 
 Gera o relatório **Mapa KM** (modelo em `src/reports/mapa_km/`).
 
-- **`meta.mes`:** string com o **nome do mês em português** (obrigatório): `Janeiro`, `Fevereiro`, `Março`, `Abril`, `Maio`, `Junho`, `Julho`, `Agosto`, `Setembro`, `Outubro`, `Novembro`, `Dezembro`.
-- **`vehicle`** (opcional): dados do veículo no rodapé — `modelo`, `matricula` (strings), `kms` (inteiro, opcional).
-- **`holidays`:** lista de inteiros **1–31** (valores inválidos são ignorados, como no mapa diário).
+O corpo do pedido tem a **mesma forma** que o Mapa Diário (`meta`, `entries`, `holidays`, `funcionario` opcional), com uma extensão em **`funcionario`**:
+
+- **`funcionario.vehicle_matricula`** (string, opcional): matrícula da viatura, gravada no modelo ao lado do rótulo «Viatura».
+- Os restantes campos de `funcionario` (`nome_completo`, `morada`, `nif`) preenchem o bloco «Recebido por» no rodapé, como no mapa diário.
+
+**`meta.mes`:** inteiro **1–12** (igual ao Mapa Diário). No Excel, o mês é escrito em **português** na célula mapeada (ex.: `3` → `Março`).
+
+**`holidays`:** lista de inteiros **1–31**; valores inválidos são ignorados.
 
 **Exemplo mínimo:**
 
 ```json
 {
-  "meta": { "mes": "Março" },
+  "meta": { "mes": 3 },
   "entries": [],
   "holidays": [25]
 }
@@ -168,7 +173,7 @@ Gera o relatório **Mapa KM** (modelo em `src/reports/mapa_km/`).
   "meta": {
     "empresa": "Minha Empresa",
     "nif": "123456789",
-    "mes": "Março"
+    "mes": 3
   },
   "entries": [
     {
@@ -180,10 +185,11 @@ Gera o relatório **Mapa KM** (modelo em `src/reports/mapa_km/`).
       "percentagem": 100
     }
   ],
-  "vehicle": {
-    "modelo": "Citroën C3",
-    "matricula": "AA-12-BB",
-    "kms": 45000
+  "funcionario": {
+    "nome_completo": "João Costa",
+    "morada": "Av. Central 50",
+    "nif": "222333444",
+    "vehicle_matricula": "34-XY-56"
   },
   "holidays": [5, 25]
 }
@@ -195,9 +201,12 @@ Gera o relatório **Mapa KM** (modelo em `src/reports/mapa_km/`).
 curl -X POST http://localhost:8000/reports/mapa-km \
   -H "Content-Type: application/json" \
   -d '{
-    "meta": { "empresa": "Teste", "mes": "Março" },
+    "meta": { "empresa": "Teste", "mes": 3 },
     "entries": [{ "day": 1, "description": "Viagem", "percentagem": 100 }],
-    "vehicle": { "modelo": "Carro X", "matricula": "BB-99-CC" },
+    "funcionario": {
+      "nome_completo": "João Costa",
+      "vehicle_matricula": "34-XY-56"
+    },
     "holidays": [25]
   }' \
   -o mapa_km.xlsx

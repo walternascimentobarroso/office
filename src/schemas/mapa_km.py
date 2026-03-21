@@ -1,66 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Pydantic schemas for Mapa KM report."""
+"""Pydantic schemas for Mapa KM report (same shape as Mapa Diário + vehicle in funcionario)."""
 
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
-class Entry(BaseModel):
-    """Activity entry for report rows."""
-
-    day: Optional[int] = None
-    description: Optional[str] = None
-    location: Optional[str] = None
-    start_time: Optional[str] = None
-    end_time: Optional[str] = None
-    percentagem: Optional[int] = Field(None, ge=0, le=100)
+from src.schemas.mapa_diario import Entry, Meta
 
 
-class Vehicle(BaseModel):
-    """Vehicle data for footer."""
+class Funcionario(BaseModel):
+    """Employee + optional vehicle plate for Mapa KM footer."""
 
-    modelo: Optional[str] = None
-    matricula: Optional[str] = None
-    kms: Optional[int] = None
-
-
-class Meta(BaseModel):
-    """Report metadata."""
-
-    empresa: Optional[str] = None
+    nome_completo: Optional[str] = None
+    morada: Optional[str] = None
     nif: Optional[str] = None
-    mes: str
-
-    @field_validator("mes")
-    @classmethod
-    def validate_mes(cls, v: str) -> str:
-        valid_months = [
-            "Janeiro",
-            "Fevereiro",
-            "Março",
-            "Abril",
-            "Maio",
-            "Junho",
-            "Julho",
-            "Agosto",
-            "Setembro",
-            "Outubro",
-            "Novembro",
-            "Dezembro",
-        ]
-        if v not in valid_months:
-            msg = f'Mês must be one of: {", ".join(valid_months)}'
-            raise ValueError(msg)
-        return v
+    vehicle_matricula: Optional[str] = None
 
 
 class MapaKmRequest(BaseModel):
-    """Request schema for Mapa KM report."""
+    """Request schema for Mapa KM — mirrors Mapa Diário; funcionario may include vehicle_matricula."""
 
     meta: Meta
     entries: List[Entry] = Field(default_factory=list)
-    vehicle: Optional[Vehicle] = None
+    funcionario: Optional[Funcionario] = None
     holidays: List[int] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="ignore")

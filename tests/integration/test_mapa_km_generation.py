@@ -5,6 +5,7 @@ import pytest
 from io import BytesIO
 from openpyxl import load_workbook
 from fastapi.testclient import TestClient
+
 from src.main import app
 
 
@@ -20,28 +21,24 @@ def test_mapa_km_header_filled_correctly(client):
         "meta": {
             "empresa": "Test Company Ltd",
             "nif": "123456789",
-            "mes": "Março"
+            "mes": 3,
         },
         "entries": [],
-        "vehicle": {},
-        "holidays": []
+        "funcionario": {},
+        "holidays": [],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
     assert response.status_code == 200
-    
-    # Load Excel from response
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Check header mappings
-    # assert ws['B2'].value == "Test Company Ltd"
+    _ = wb.active
 
 
 def test_mapa_km_entries_filled_correctly(client):
     """Test that entries are filled correctly in rows"""
     payload = {
-        "meta": {"mes": "Março"},
+        "meta": {"mes": 3},
         "entries": [
             {
                 "day": 1,
@@ -49,83 +46,72 @@ def test_mapa_km_entries_filled_correctly(client):
                 "location": "Client Office",
                 "start_time": "08:00",
                 "end_time": "09:00",
-                "percentagem": 100
+                "percentagem": 100,
             }
         ],
-        "vehicle": {},
-        "holidays": []
+        "funcionario": {},
+        "holidays": [],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
     assert response.status_code == 200
-    
-    # Load and verify entries
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Check row data
-    # assert ws['A8'].value == 1
-    # assert ws['B8'].value == "Drive to client"
+    _ = wb.active
 
 
-def test_mapa_km_vehicle_footer_filled(client):
-    """Test that vehicle data is filled in footer"""
+def test_mapa_km_funcionario_footer_including_vehicle(client):
+    """funcionario block fills footer; vehicle_matricula in viatura cell."""
     payload = {
-        "meta": {"mes": "Março"},
+        "meta": {"mes": 3},
         "entries": [],
-        "vehicle": {
-            "modelo": "Toyota Corolla",
-            "matricula": "AA-12-BB",
-            "kms": 15000
+        "funcionario": {
+            "nome_completo": "Maria Silva",
+            "morada": "Rua Um",
+            "nif": "999888777",
+            "vehicle_matricula": "AA-00-BB",
         },
-        "holidays": []
+        "holidays": [],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
     ws = wb.active
-    
-    # Check footer mappings
-    # assert ws['B30'].value == "Toyota Corolla"
-    # assert ws['D30'].value == "AA-12-BB"
-    # assert ws['F30'].value == 15000
+    assert ws["B45"].value == "Maria Silva"
+    assert ws["B46"].value == "Rua Um"
+    assert ws["E45"].value == "999888777"
+    assert ws["E46"].value == "AA-00-BB"
 
 
 def test_mapa_km_weekend_styling_applied(client):
     """Test that weekend days are styled correctly"""
     payload = {
-        "meta": {"mes": "Março"},
+        "meta": {"mes": 3},
         "entries": [],
-        "vehicle": {},
-        "holidays": []
+        "funcionario": {},
+        "holidays": [],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Check weekend styling
-    # assert ws['A2'].fill.fgColor.rgb == "FFF0F0F0"
+    _ = wb.active
 
 
 def test_mapa_km_holiday_styling_applied(client):
     """Test that holiday days are styled correctly"""
     payload = {
-        "meta": {"mes": "Março"},
+        "meta": {"mes": 3},
         "entries": [],
-        "vehicle": {},
-        "holidays": [5, 25]
+        "funcionario": {},
+        "holidays": [5, 25],
     }
-    
+
     response = client.post("/reports/mapa-km", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Check holiday styling
-    # assert ws['A5'].fill.fgColor.rgb == "FFFFFFE0"
+    _ = wb.active

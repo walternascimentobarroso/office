@@ -134,6 +134,11 @@ class BaseExcelService(ABC):
     ) -> None:
         """Fill footer cells."""
 
+    def _calendar_style_row_bounds(self) -> tuple[int, int]:
+        """First/last sheet rows where column A holds day-of-month numbers."""
+
+        return (8, 38)
+
     def apply_styles(self, ws: Worksheet, data: Dict[str, Any]) -> None:
         """Highlight column A: holidays take priority over weekends."""
 
@@ -153,7 +158,8 @@ class BaseExcelService(ABC):
             fill_type="solid",
         )
 
-        for row in range(8, 39):
+        first_row, last_row = self._calendar_style_row_bounds()
+        for row in range(first_row, last_row + 1):
             day_cell = resolve_writable_cell(ws, f"A{row}")
             day_num = _coerce_day_of_month(day_cell.value)
             if day_num is None:

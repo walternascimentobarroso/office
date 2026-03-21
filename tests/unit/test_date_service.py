@@ -55,3 +55,14 @@ class TestDateService:
     def test_resolve_month_unknown_name(self) -> None:
         with pytest.raises(ValueError):
             DateService.resolve_month("NotAMonth")
+
+    def test_month_name_portuguese(self) -> None:
+        assert DateService.month_name_portuguese(1) == "Janeiro"
+        assert DateService.month_name_portuguese(3) == "Março"
+        assert DateService.month_name_portuguese(12) == "Dezembro"
+
+    def test_month_name_portuguese_invalid(self) -> None:
+        with pytest.raises(ValueError):
+            DateService.month_name_portuguese(0)
+        with pytest.raises(ValueError):
+            DateService.month_name_portuguese(13)
