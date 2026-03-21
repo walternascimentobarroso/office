@@ -18,17 +18,17 @@ def test_mapa_km_valid_request_returns_excel(client):
     payload = {
         "meta": {
             "empresa": "Test Company",
+            "endereco": "Rua Um, 1",
             "nif": "123456789",
             "mes": 3,
         },
         "entries": [
             {
                 "day": 1,
-                "description": "Test activity",
-                "location": "Test location",
-                "start_time": "09:00",
-                "end_time": "10:00",
-                "percentagem": 100,
+                "origem": "Braga",
+                "destino": "Lisboa",
+                "description": "Deslocação",
+                "n_kms": "363,000",
             }
         ],
         "funcionario": {

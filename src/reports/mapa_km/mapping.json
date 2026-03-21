@@ -1,6 +1,7 @@
 {
   "header": {
     "empresa": "A4",
+    "endereco": "B5",
     "nif": "C6",
     "mes": "E6"
   },
@@ -8,11 +9,10 @@
     "start_row": 9,
     "columns": {
       "day": "A",
+      "origem": "B",
+      "destino": "C",
       "description": "D",
-      "location": "B",
-      "start_time": "E",
-      "end_time": "C",
-      "percentagem": "F"
+      "n_kms": "F"
     }
   },
   "footer": {

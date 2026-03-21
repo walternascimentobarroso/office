@@ -16,10 +16,11 @@ def client():
 
 
 def test_mapa_km_header_filled_correctly(client):
-    """Test that header fields are filled correctly in Excel"""
+    """Empresa A4, endereço B5."""
     payload = {
         "meta": {
             "empresa": "Test Company Ltd",
+            "endereco": "Av. Teste 99",
             "nif": "123456789",
             "mes": 3,
         },
@@ -32,21 +33,23 @@ def test_mapa_km_header_filled_correctly(client):
     assert response.status_code == 200
 
     wb = load_workbook(BytesIO(response.content))
-    _ = wb.active
+    ws = wb.active
+    assert ws["A4"].value == "Test Company Ltd"
+    assert ws["B5"].value == "Av. Teste 99"
+    assert ws["C6"].value == "123.456.789"
 
 
 def test_mapa_km_entries_filled_correctly(client):
-    """Test that entries are filled correctly in rows"""
+    """Columns A–D e F conforme mapping."""
     payload = {
         "meta": {"mes": 3},
         "entries": [
             {
                 "day": 1,
-                "description": "Drive to client",
-                "location": "Client Office",
-                "start_time": "08:00",
-                "end_time": "09:00",
-                "percentagem": 100,
+                "origem": "Braga",
+                "destino": "Lisboa",
+                "description": "Deslocação para execução de tarefas",
+                "n_kms": "363,000",
             }
         ],
         "funcionario": {},
@@ -57,7 +60,12 @@ def test_mapa_km_entries_filled_correctly(client):
     assert response.status_code == 200
 
     wb = load_workbook(BytesIO(response.content))
-    _ = wb.active
+    ws = wb.active
+    assert ws["A9"].value == 1
+    assert ws["B9"].value == "Braga"
+    assert ws["C9"].value == "Lisboa"
+    assert ws["D9"].value == "Deslocação para execução de tarefas"
+    assert ws["F9"].value == 363.0
 
 
 def test_mapa_km_funcionario_footer_including_vehicle(client):
@@ -81,7 +89,7 @@ def test_mapa_km_funcionario_footer_including_vehicle(client):
     ws = wb.active
     assert ws["B45"].value == "Maria Silva"
     assert ws["B46"].value == "Rua Um"
-    assert ws["E45"].value == "999888777"
+    assert ws["E45"].value == "999.888.777"
     assert ws["E46"].value == "AA-00-BB"
 
 

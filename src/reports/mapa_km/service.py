@@ -10,7 +10,9 @@ from openpyxl.worksheet.worksheet import Worksheet
 from src.core.business_calendar import last_weekday_of_month
 from src.core.excel_cells import set_cell_value
 from src.core.utils import load_json_mapping
-from src.services.base_excel_service import BaseExcelService, fill_entry_row_cells
+from src.reports.mapa_km.kms_value import parse_n_kms_value
+from src.reports.mapa_km.nif_format import format_nif_pt
+from src.services.base_excel_service import BaseExcelService
 from src.services.date_service import DateService
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,8 @@ class MapaKmService(BaseExcelService):
                 continue
             if field == "mes" and isinstance(value, int):
                 value = DateService.month_name_portuguese(value)
+            elif field == "nif":
+                value = format_nif_pt(value)
             set_cell_value(ws, cell, value)
             logger.debug("Filled header %s with %s: %s", cell, field, value)
 
@@ -52,21 +56,24 @@ class MapaKmService(BaseExcelService):
         entries: List[Dict[str, Any]],
         row_mappings: Dict[str, Any],
     ) -> None:
-        """Fill data rows from entries."""
+        """Fill data rows: ``n_kms`` parsed to numeric for column F."""
 
         start_row = row_mappings.get("start_row", 9)
         columns = row_mappings.get("columns", {})
-        pct_fill = self._config.PERCENTAGE_UNDER_100_FILL
 
         for i, entry in enumerate(entries):
             row_num = start_row + i
-            fill_entry_row_cells(
-                ws,
-                row_num,
-                entry,
-                columns,
-                percentage_under_100_fill=pct_fill,
-            )
+            for field, col in columns.items():
+                value = entry.get(field)
+                if value is None:
+                    continue
+                addr = f"{col}{row_num}"
+                if field == "n_kms":
+                    parsed = parse_n_kms_value(value)
+                    if parsed is not None:
+                        set_cell_value(ws, addr, parsed)
+                    continue
+                set_cell_value(ws, addr, value)
 
     def fill_footer(
         self,
@@ -86,7 +93,9 @@ class MapaKmService(BaseExcelService):
                 logger.debug("Filled footer %s with ultimo_dia_util_mes", cell)
                 continue
             if isinstance(funcionario, dict):
-                value = funcionario.get(field)
-                if value is not None:
-                    set_cell_value(ws, cell, value)
-                    logger.debug("Filled footer %s with %s: %s", cell, field, value)
+                fvalue = funcionario.get(field)
+                if fvalue is not None:
+                    if field == "nif":
+                        fvalue = format_nif_pt(fvalue)
+                    set_cell_value(ws, cell, fvalue)
+                    logger.debug("Filled footer %s with %s: %s", cell, field, fvalue)

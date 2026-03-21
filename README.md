@@ -1,6 +1,6 @@
 # Excel API
 
-API **FastAPI** que gera ficheiros Excel (`.xlsx`) a partir de JSON: relatórios **Mapa Diário** (`/reports/mapa-diario`) e **Mapa KM** (`/reports/mapa-km`). O **Mapa Diário** substitui o antigo `/generate-excel`: realce na **coluna A** (dias do mês) para fins de semana e feriados, percentagens no modelo, rodapé com último dia útil, e nome de ficheiro `relatorio_<mês>_<timestamp_utc>.xlsx`. O **Mapa KM** usa o **mesmo JSON** que o Mapa Diário; em `funcionario` pode ir também **`vehicle_matricula`** (matrícula).
+API **FastAPI** que gera ficheiros Excel (`.xlsx`) a partir de JSON: relatórios **Mapa Diário** (`/reports/mapa-diario`) e **Mapa KM** (`/reports/mapa-km`). O **Mapa Diário** substitui o antigo `/generate-excel`: realce na **coluna A** (dias do mês) para fins de semana e feriados, percentagens no modelo, rodapé com último dia útil, e nome de ficheiro `relatorio_<mês>_<timestamp_utc>.xlsx`. O **Mapa KM** partilha `meta.mes` (1–12), `holidays` e o bloco `funcionario` (com **`vehicle_matricula`**); o `meta` inclui **`endereco`** e as `entries` usam campos de deslocação e **`n_kms`** (ver secção Mapa KM).
 
 ## Requisitos
 
@@ -111,7 +111,7 @@ Gera o relatório **Mapa Diário** (modelo em `src/reports/mapa_diario/template.
     {
       "day": 1,
       "description": "Reunião",
-      "location": "Escritório",
+      "location": "Lisboa",
       "start_time": "09:00",
       "end_time": "10:00",
       "percentagem": 100
@@ -147,14 +147,27 @@ curl -X POST http://localhost:8000/reports/mapa-diario \
 
 Gera o relatório **Mapa KM** (modelo em `src/reports/mapa_km/`).
 
-O corpo do pedido tem a **mesma forma** que o Mapa Diário (`meta`, `entries`, `holidays`, `funcionario` opcional), com uma extensão em **`funcionario`**:
+**`meta`** (obrigatório: `mes` 1–12):
 
-- **`funcionario.vehicle_matricula`** (string, opcional): matrícula da viatura, gravada no modelo ao lado do rótulo «Viatura».
-- Os restantes campos de `funcionario` (`nome_completo`, `morada`, `nif`) preenchem o bloco «Recebido por» no rodapé, como no mapa diário.
+- `empresa`, `nif` (opcionais) — cabeçalho do modelo.
+- **`endereco`** (opcional) — morada da empresa na célula **B5**.
+- `mes` — no Excel é gravado o **nome do mês em português** (ex.: `3` → `Março`).
 
-**`meta.mes`:** inteiro **1–12** (igual ao Mapa Diário). No Excel, o mês é escrito em **português** na célula mapeada (ex.: `3` → `Março`).
+**`entries`** (lista de linhas de deslocação):
 
-**`holidays`:** lista de inteiros **1–31**; valores inválidos são ignorados.
+| Campo JSON   | Coluna no Excel   |
+|--------------|-------------------|
+| `day`        | A (dia)           |
+| `origem`     | B (local origem)  |
+| `destino`    | C (local destino) |
+| `description`| D (justificação)  |
+| `n_kms`      | F (Nº de KMS)     |
+
+`n_kms` pode ser número ou texto. A **vírgula é o separador decimal** (como em PT): `"12,5"` → 12,5; `"363,000"` → **363** com três casas decimais (não 363 mil). Milhares na parte inteira usam **ponto**: `"1.234,56"`.
+
+**`funcionario`** (opcional): `nome_completo`, `morada`, `nif`, **`vehicle_matricula`** (rodapé «Recebido por» / viatura).
+
+**`holidays`:** inteiros **1–31**; valores inválidos são ignorados.
 
 **Exemplo mínimo:**
 
@@ -172,17 +185,17 @@ O corpo do pedido tem a **mesma forma** que o Mapa Diário (`meta`, `entries`, `
 {
   "meta": {
     "empresa": "Minha Empresa",
+    "endereco": "Av. Central 50",
     "nif": "123456789",
     "mes": 3
   },
   "entries": [
     {
       "day": 1,
-      "description": "Deslocação cliente",
-      "location": "Porto",
-      "start_time": "09:00",
-      "end_time": "12:00",
-      "percentagem": 100
+      "origem": "Braga",
+      "destino": "Lisboa",
+      "description": "Deslocação para execução de tarefas",
+      "n_kms": "363,000"
     }
   ],
   "funcionario": {
@@ -201,8 +214,14 @@ O corpo do pedido tem a **mesma forma** que o Mapa Diário (`meta`, `entries`, `
 curl -X POST http://localhost:8000/reports/mapa-km \
   -H "Content-Type: application/json" \
   -d '{
-    "meta": { "empresa": "Teste", "mes": 3 },
-    "entries": [{ "day": 1, "description": "Viagem", "percentagem": 100 }],
+    "meta": { "empresa": "Teste", "endereco": "Rua X", "mes": 3 },
+    "entries": [{
+      "day": 1,
+      "origem": "Braga",
+      "destino": "Lisboa",
+      "description": "Viagem",
+      "n_kms": "100"
+    }],
     "funcionario": {
       "nome_completo": "João Costa",
       "vehicle_matricula": "34-XY-56"
