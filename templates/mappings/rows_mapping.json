@@ -1,0 +1,10 @@
+{
+  "start_row": 8,
+  "columns": {
+    "day": "A",
+    "description": "B",
+    "location": "D",
+    "start_time": "E",
+    "end_time": "J"
+  }
+}

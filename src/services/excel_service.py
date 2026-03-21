@@ -1,0 +1,182 @@
+# -*- coding: utf-8 -*-
+"""Excel service for generating Excel files from JSON input"""
+
+from io import BytesIO
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
+import logging
+
+from src.core.config import Config
+from src.core.mapping import MappingLoader
+from src.core.exceptions import TemplateLoadError, ExcelWriteError
+from src.models.request import GenerateExcelRequest, Meta, Entry
+
+logger = logging.getLogger(__name__)
+
+
+class ExcelService:
+    """Service for loading templates and generating Excel files"""
+
+    def __init__(self, config: Optional[Config] = None):
+        """Initialize service with configuration"""
+        self.config = config or Config()
+        self.header_mapping = MappingLoader.load_header_mapping(
+            self.config.header_mapping_path
+        )
+        self.rows_mapping = MappingLoader.load_rows_mapping(
+            self.config.rows_mapping_path
+        )
+        logger.info(
+            "ExcelService initialized",
+            extra={
+                "extra_data": {
+                    "template_path": self.config.template_path,
+                    "header_mapping_keys": list(self.header_mapping.keys()),
+                    "rows_mapping_keys": list(self.rows_mapping["columns"].keys()),
+                }
+            },
+        )
+
+    def load_template(self) -> Any:
+        """Load Excel template from configured path"""
+        try:
+            template_path = Path(self.config.template_path)
+            if not template_path.exists():
+                raise TemplateLoadError(f"Template not found: {self.config.template_path}")
+
+            workbook = load_workbook(template_path)
+            logger.info(
+                "Template loaded successfully",
+                extra={"extra_data": {"template_path": self.config.template_path}},
+            )
+            return workbook
+
+        except TemplateLoadError:
+            raise
+        except Exception as e:
+            logger.error(
+                f"Error loading template: {e}",
+                extra={"extra_data": {"template_path": self.config.template_path}},
+            )
+            raise TemplateLoadError(f"Failed to load template: {str(e)}")
+
+    def _fill_header(self, workbook: Any, meta: Meta) -> Any:
+        """Fill header cells from meta data"""
+        try:
+            ws = workbook.active
+            meta_dict = meta.model_dump()
+
+            filled_cells = 0
+            for field, cell_address in self.header_mapping.items():
+                value = meta_dict.get(field)
+                if value is not None:
+                    ws[cell_address] = value
+                    filled_cells += 1
+                    logger.debug(
+                        f"Header cell filled: {cell_address} = {value}",
+                        extra={"extra_data": {"field": field, "cell": cell_address}},
+                    )
+
+            logger.info(
+                f"Header filled: {filled_cells} cells",
+                extra={"extra_data": {"filled_cells": filled_cells}},
+            )
+            return workbook
+
+        except Exception as e:
+            logger.error(f"Error filling header: {e}")
+            raise ExcelWriteError(f"Failed to fill header: {str(e)}")
+
+    def _fill_rows(self, workbook: Any, entries: List[Entry]) -> Any:
+        """Fill rows from entries data"""
+        try:
+            ws = workbook.active
+            start_row = self.rows_mapping["start_row"]
+            columns_mapping = self.rows_mapping["columns"]
+
+            filled_rows = 0
+            for index, entry in enumerate(entries):
+                row_number = start_row + index
+                entry_dict = entry.model_dump()
+
+                for field, column_letter in columns_mapping.items():
+                    value = entry_dict.get(field)
+                    if value is not None:
+                        cell_address = f"{column_letter}{row_number}"
+                        ws[cell_address] = value
+                        logger.debug(
+                            f"Row cell filled: {cell_address} = {value}",
+                            extra={
+                                "extra_data": {
+                                    "row": row_number,
+                                    "field": field,
+                                    "cell": cell_address,
+                                }
+                            },
+                        )
+
+                filled_rows += 1
+
+            logger.info(
+                f"Rows filled: {filled_rows} rows",
+                extra={"extra_data": {"filled_rows": filled_rows, "total_entries": len(entries)}},
+            )
+            return workbook
+
+        except Exception as e:
+            logger.error(f"Error filling rows: {e}")
+            raise ExcelWriteError(f"Failed to fill rows: {str(e)}")
+
+    def _write_to_stream(self, workbook: Any) -> BytesIO:
+        """Write workbook to BytesIO stream"""
+        try:
+            output_stream = BytesIO()
+            workbook.save(output_stream)
+            output_stream.seek(0)  # Reset stream position to beginning
+            logger.info(
+                "Excel written to stream",
+                extra={"extra_data": {"stream_size_bytes": output_stream.getbuffer().nbytes}},
+            )
+            return output_stream
+
+        except Exception as e:
+            logger.error(f"Error writing Excel to stream: {e}")
+            raise ExcelWriteError(f"Failed to write Excel file: {str(e)}")
+
+    async def generate(self, request: GenerateExcelRequest) -> BytesIO:
+        """
+        Generate Excel file from request data
+        
+        Orchestrates: load_template → fill_header → fill_rows → write_to_stream
+        """
+        try:
+            logger.info(
+                "Excel generation started",
+                extra={
+                    "extra_data": {
+                        "meta_fields_provided": len(
+                            [v for v in request.meta.model_dump().values() if v is not None]
+                        ),
+                        "entries_count": len(request.entries),
+                    }
+                },
+            )
+
+            workbook = self.load_template()
+            workbook = self._fill_header(workbook, request.meta)
+            workbook = self._fill_rows(workbook, request.entries)
+            output_stream = self._write_to_stream(workbook)
+
+            logger.info(
+                "Excel generation completed successfully",
+                extra={"extra_data": {"stream_size_bytes": output_stream.getbuffer().nbytes}},
+            )
+            return output_stream
+
+        except (TemplateLoadError, ExcelWriteError):
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during Excel generation: {e}")
+            raise ExcelWriteError(f"Unexpected error: {str(e)}")
