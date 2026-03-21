@@ -10,8 +10,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 from src.core.business_calendar import last_weekday_of_month
 from src.core.excel_cells import set_cell_value
 from src.core.utils import load_json_mapping
+from src.core.nif_format_pt import format_nif_pt
 from src.reports.mapa_km.kms_value import parse_n_kms_value
-from src.reports.mapa_km.nif_format import format_nif_pt
 from src.services.base_excel_service import BaseExcelService
 from src.services.date_service import DateService
 

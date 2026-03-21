@@ -9,6 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from src.core.business_calendar import last_weekday_of_month
 from src.core.excel_cells import set_cell_value
+from src.core.nif_format_pt import format_nif_pt
 from src.core.utils import load_json_mapping
 from src.services.base_excel_service import BaseExcelService, fill_entry_row_cells
 from src.services.date_service import DateService
@@ -34,9 +35,12 @@ class MapaDiarioService(BaseExcelService):
 
         for field, cell in header_mappings.items():
             value = meta.get(field)
-            if value is not None:
-                set_cell_value(ws, cell, value)
-                logger.debug("Filled header %s with %s: %s", cell, field, value)
+            if value is None:
+                continue
+            if field == "nif":
+                value = format_nif_pt(value)
+            set_cell_value(ws, cell, value)
+            logger.debug("Filled header %s with %s: %s", cell, field, value)
 
     def fill_rows(
         self,
@@ -80,5 +84,7 @@ class MapaDiarioService(BaseExcelService):
             if isinstance(funcionario, dict):
                 value = funcionario.get(field)
                 if value is not None:
+                    if field == "nif":
+                        value = format_nif_pt(value)
                     set_cell_value(ws, cell, value)
                     logger.debug("Filled footer %s with %s: %s", cell, field, value)

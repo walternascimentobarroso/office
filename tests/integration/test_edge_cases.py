@@ -98,7 +98,7 @@ def test_empty_strings_vs_missing_fields(client):
     
     # Empty string should be written as empty, None should leave cell unchanged
     # assert ws['B8'].value == ""  # Empty string
-    # assert ws['D8'].value is None or ws['D8'].value == ""  # None becomes empty
+    # assert ws['E8'].value is None or ws['E8'].value == ""  # None becomes empty (start_time col)
 
 
 def test_holiday_filtering_invalid_values(client):

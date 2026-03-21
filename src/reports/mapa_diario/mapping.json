@@ -9,9 +9,9 @@
     "columns": {
       "day": "A",
       "description": "B",
-      "location": "C",
-      "start_time": "D",
-      "end_time": "E",
+      "location": "D",
+      "start_time": "E",
+      "end_time": "J",
       "percentagem": "M"
     }
   },

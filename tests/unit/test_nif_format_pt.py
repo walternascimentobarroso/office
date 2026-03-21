@@ -3,7 +3,7 @@
 
 import pytest
 
-from src.reports.mapa_km.nif_format import format_nif_pt
+from src.core.nif_format_pt import format_nif_pt
 
 
 @pytest.mark.parametrize(

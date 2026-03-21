@@ -34,10 +34,8 @@ def test_mapa_diario_header_filled_correctly(client):
     wb = load_workbook(BytesIO(response.content))
     ws = wb.active
     
-    # Check header mappings (assuming standard mapping)
-    # These assertions will depend on actual mapping.json
-    # For now, placeholder - will need to be updated based on real mappings
-    # assert ws['B2'].value == "Test Company Ltd"  # Example
+    assert ws["B1"].value == "Test Company Ltd"
+    assert ws["D4"].value == "123.456.789"
 
 
 def test_mapa_diario_entries_filled_correctly(client):
@@ -70,10 +68,11 @@ def test_mapa_diario_entries_filled_correctly(client):
     wb = load_workbook(BytesIO(response.content))
     ws = wb.active
     
-    # Check row data (assuming row 8+ for entries)
-    # assert ws['A8'].value == 1
-    # assert ws['B8'].value == "Morning meeting"
-    # etc.
+    assert ws["A8"].value == 1
+    assert ws["B8"].value == "Morning meeting"
+    assert ws["D8"].value == "Office"
+    assert ws["E8"].value == "09:00"
+    assert ws["J8"].value == "10:30"
 
 
 def test_mapa_diario_funcionario_footer_filled(client):
@@ -95,8 +94,9 @@ def test_mapa_diario_funcionario_footer_filled(client):
     wb = load_workbook(BytesIO(response.content))
     ws = wb.active
     
-    # Check footer mappings
-    # assert ws['B30'].value == "João Silva"  # Example
+    assert ws["B42"].value == "João Silva"
+    assert ws["B43"].value == "Rua Test 123, Lisbon"
+    assert ws["D44"].value == "987.654.321"
 
 
 def test_mapa_diario_weekend_styling_applied(client):
