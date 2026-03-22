@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 def _generate_filename(request: MapaDiarioRequest) -> str:
-    mes_label = str(request.meta.mes)
+    mes_label = str(request.month)
     mes_safe = "".join(
         c for c in mes_label if c.isalnum() or c in (" ", "-", "_")
     )[:20]
@@ -44,8 +44,8 @@ async def generate_mapa_diario(
             "Mapa Diário generation request received",
             extra={
                 "extra_data": {
-                    "meta_fields": len(
-                        [v for v in request.meta.model_dump().values() if v]
+                    "company_fields": len(
+                        [v for v in request.company.model_dump().values() if v]
                     ),
                     "entries_count": len(request.entries),
                 }

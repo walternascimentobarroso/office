@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 def _generate_filename(request: MapaKmRequest) -> str:
-    mes_num = DateService.resolve_month(request.meta.mes)
+    mes_num = DateService.resolve_month(request.month)
     mes_safe = str(mes_num)
     timestamp_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return f"relatorio_{mes_safe}_{timestamp_iso}.xlsx"
@@ -36,8 +36,8 @@ async def generate_mapa_km(request: MapaKmRequest) -> StreamingResponse | JSONRe
             "Mapa KM generation request received",
             extra={
                 "extra_data": {
-                    "meta_fields": len(
-                        [v for v in request.meta.model_dump().values() if v]
+                    "company_fields": len(
+                        [v for v in request.company.model_dump().values() if v]
                     ),
                     "entries_count": len(request.entries),
                 }

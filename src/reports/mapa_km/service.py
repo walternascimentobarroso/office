@@ -81,11 +81,18 @@ class MapaKmService(BaseExcelService):
         data: Dict[str, Any],
         footer_mappings: Dict[str, str],
     ) -> None:
-        """Fill footer from funcionario (incl. vehicle_matricula) and último dia útil."""
+        """Fill footer from employee data (incl. vehicle plate) and último dia útil."""
 
-        month = DateService.resolve_month(data["meta"]["mes"])
-        year = date.today().year
-        funcionario = data.get("funcionario") or {}
+        month = DateService.resolve_month(data.get("month") or data.get("meta", {}).get("mes"))
+        year = data.get("year") or date.today().year
+        employee = data.get("employee") or {}
+
+        funcionario = {
+            "nome_completo": employee.get("name"),
+            "morada": employee.get("address"),
+            "nif": employee.get("tax_id"),
+            "vehicle_matricula": employee.get("vehicle_plate"),
+        }
 
         for field, cell in footer_mappings.items():
             if field == "ultimo_dia_util_mes":

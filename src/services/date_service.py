@@ -29,7 +29,7 @@ class DateService:
 
     @staticmethod
     def resolve_month(mes: int | str) -> int:
-        """Resolve meta.mes (1–12 or Portuguese month name) to month number."""
+        """Resolve month (1–12 or Portuguese month name) to month number."""
 
         if isinstance(mes, int):
             if not 1 <= mes <= 12:

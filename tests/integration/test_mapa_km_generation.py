@@ -18,14 +18,18 @@ def client():
 def test_mapa_km_header_filled_correctly(client):
     """Empresa A4, endereço B5."""
     payload = {
-        "meta": {
-            "empresa": "Test Company Ltd",
-            "endereco": "Av. Teste 99",
-            "nif": "123456789",
-            "mes": 3,
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
         },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
         "holidays": [],
     }
 
@@ -42,7 +46,17 @@ def test_mapa_km_header_filled_correctly(client):
 def test_mapa_km_entries_filled_correctly(client):
     """Columns A–D e F conforme mapping."""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 1,
@@ -52,7 +66,6 @@ def test_mapa_km_entries_filled_correctly(client):
                 "n_kms": "363,000",
             }
         ],
-        "funcionario": {},
         "holidays": [],
     }
 
@@ -71,7 +84,17 @@ def test_mapa_km_entries_filled_correctly(client):
 def test_mapa_km_entry_maps_to_calendar_day_not_list_order(client):
     """First JSON entry with day 4 must land on row for dia 4 (start_row 9 → row 12)."""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 4,
@@ -81,7 +104,6 @@ def test_mapa_km_entry_maps_to_calendar_day_not_list_order(client):
                 "n_kms": "363,000",
             }
         ],
-        "funcionario": {},
         "holidays": [],
     }
 
@@ -101,14 +123,19 @@ def test_mapa_km_entry_maps_to_calendar_day_not_list_order(client):
 def test_mapa_km_funcionario_footer_including_vehicle(client):
     """funcionario block fills footer; vehicle_matricula in viatura cell."""
     payload = {
-        "meta": {"mes": 3},
-        "entries": [],
-        "funcionario": {
-            "nome_completo": "Maria Silva",
-            "morada": "Rua Um",
-            "nif": "999888777",
-            "vehicle_matricula": "AA-00-BB",
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
         },
+        "employee": {
+            "name": "Maria Silva",
+            "address": "Rua Um",
+            "tax_id": "999888777",
+            "vehicle_plate": "AA-00-BB",
+        },
+        "month": 3,
+        "entries": [],
         "holidays": [],
     }
 
@@ -126,9 +153,18 @@ def test_mapa_km_funcionario_footer_including_vehicle(client):
 def test_mapa_km_weekend_styling_applied(client):
     """Test that weekend days are styled correctly"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
         "holidays": [],
     }
 
@@ -142,9 +178,18 @@ def test_mapa_km_weekend_styling_applied(client):
 def test_mapa_km_holiday_styling_applied(client):
     """Test that holiday days are styled correctly"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
         "holidays": [5, 25],
     }
 

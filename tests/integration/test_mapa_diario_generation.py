@@ -17,14 +17,19 @@ def client():
 def test_mapa_diario_header_filled_correctly(client):
     """Test that header fields are filled correctly in Excel"""
     payload = {
-        "meta": {
-            "empresa": "Test Company Ltd",
-            "nif": "123456789",
-            "mes": 3
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
         },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -41,7 +46,17 @@ def test_mapa_diario_header_filled_correctly(client):
 def test_mapa_diario_entries_filled_correctly(client):
     """Test that entries are filled correctly in rows"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 1,
@@ -49,16 +64,15 @@ def test_mapa_diario_entries_filled_correctly(client):
                 "location": "Office",
                 "start_time": "09:00",
                 "end_time": "10:30",
-                "percentagem": 75
+                "percentagem": 75,
             },
             {
                 "day": 2,
                 "description": "Client call",
-                "percentagem": 100
+                "percentagem": 100,
             }
         ],
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -80,7 +94,17 @@ def test_mapa_diario_entries_filled_correctly(client):
 def test_mapa_diario_entry_maps_to_calendar_day_not_list_order(client):
     """First JSON entry with day 4 must land on row for dia 4, not dia 1."""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 4,
@@ -89,7 +113,6 @@ def test_mapa_diario_entry_maps_to_calendar_day_not_list_order(client):
                 "percentagem": 100,
             }
         ],
-        "funcionario": {},
         "holidays": [],
     }
 
@@ -107,14 +130,19 @@ def test_mapa_diario_entry_maps_to_calendar_day_not_list_order(client):
 def test_mapa_diario_funcionario_footer_filled(client):
     """Test that funcionario data is filled in footer"""
     payload = {
-        "meta": {"mes": 3},
-        "entries": [],
-        "funcionario": {
-            "nome_completo": "João Silva",
-            "morada": "Rua Test 123, Lisbon",
-            "nif": "987654321"
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
         },
-        "holidays": []
+        "employee": {
+            "name": "João Silva",
+            "address": "Rua Test 123, Lisbon",
+            "tax_id": "987654321",
+        },
+        "month": 3,
+        "entries": [],
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -131,10 +159,19 @@ def test_mapa_diario_funcionario_footer_filled(client):
 def test_mapa_diario_weekend_styling_applied(client):
     """Test that weekend days are styled correctly"""
     payload = {
-        "meta": {"mes": 3},  # March 2024 has weekends
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,  # March 2024 has weekends
         "entries": [],
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -151,10 +188,19 @@ def test_mapa_diario_weekend_styling_applied(client):
 def test_mapa_diario_holiday_styling_applied(client):
     """Test that holiday days are styled correctly"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
-        "holidays": [5, 25]
+        "holidays": [5, 25],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)

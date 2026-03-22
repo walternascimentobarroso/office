@@ -39,6 +39,12 @@
 - JSON Source of Truth: Is JSON the single authoritative input source?
 - Extensibility: Can new reports be added easily without major changes?
 - Modularity: Does the design maintain clear separation of concerns and modular architecture?
+- API Domain Naming: Are all request fields explicit domain names (no generic field names)?
+- Company Metadata: Is the metadata field named "company" (not "meta")?
+- Top-Level Time Fields: Does the request schema include top-level "month"?
+- Request Structure Consistency: Do all report endpoints share the same base request structure?
+- English Naming: Are request/response fields in English and consistent across reports?
+- Future-Proof Contract: Does the plan allow new reports and fields without disruptive refactoring?
 
 ## Project Structure
 

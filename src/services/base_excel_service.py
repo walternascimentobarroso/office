@@ -112,7 +112,18 @@ class BaseExcelService(ABC):
         ws = wb.active
 
         try:
-            self.fill_header(ws, data.get("meta", {}), mappings.get("header", {}))
+            meta_data = data.get("meta")
+            if not meta_data:
+                company = data.get("company", {})
+                # maintain mapping keys for existing templates
+                meta_data = {
+                    "empresa": company.get("name"),
+                    "nif": company.get("tax_id"),
+                    "endereco": company.get("address"),
+                    "mes": data.get("month"),
+                }
+
+            self.fill_header(ws, meta_data, mappings.get("header", {}))
             self.fill_rows(ws, data.get("entries", []), mappings.get("rows", {}))
             self.fill_footer(ws, data, mappings.get("footer", {}))
             self.apply_styles(ws, data)
@@ -167,8 +178,8 @@ class BaseExcelService(ABC):
     def apply_styles(self, ws: Worksheet, data: Dict[str, Any]) -> None:
         """Highlight column A: holidays take priority over weekends."""
 
-        month_num = DateService.resolve_month(data["meta"]["mes"])
-        year = date.today().year
+        month_num = DateService.resolve_month(data.get("month") or data.get("meta", {}).get("mes"))
+        year = data.get("year") or date.today().year
         weekend_days = DateService.get_weekend_days(month_num, year)
         holiday_days = set(data.get("holidays", []))
 

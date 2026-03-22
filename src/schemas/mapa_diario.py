@@ -3,7 +3,9 @@
 
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
+
+from src.schemas.base_report import BaseReportRequest
 
 
 class Entry(BaseModel):
@@ -17,45 +19,9 @@ class Entry(BaseModel):
     percentagem: Optional[int] = Field(None, ge=0, le=100)
 
 
-class Funcionario(BaseModel):
-    """Employee data for footer."""
-
-    nome_completo: Optional[str] = None
-    morada: Optional[str] = None
-    nif: Optional[str] = None
-
-
-class Meta(BaseModel):
-    """Report metadata."""
-
-    empresa: Optional[str] = None
-    nif: Optional[str] = None
-    mes: int = Field(..., ge=1, le=12)
-
-
-class MapaDiarioRequest(BaseModel):
+class MapaDiarioRequest(BaseReportRequest):
     """Request schema for Mapa Diário report."""
 
-    meta: Meta
     entries: List[Entry] = Field(default_factory=list)
-    funcionario: Optional[Funcionario] = None
-    holidays: List[int] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="ignore")
-
-    @field_validator("holidays", mode="before")
-    @classmethod
-    def normalize_holidays(cls, value: object) -> list[int]:
-        """Keep only valid day-of-month integers (same behaviour as legacy /generate-excel)."""
-
-        if value is None:
-            return []
-        if not isinstance(value, list):
-            return []
-        out: list[int] = []
-        for item in value:
-            if item is None or isinstance(item, bool):
-                continue
-            if isinstance(item, int) and 1 <= item <= 31:
-                out.append(item)
-        return out

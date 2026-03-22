@@ -15,11 +15,18 @@ def client():
 def test_mapa_diario_valid_request_returns_excel(client):
     """Test that valid request returns Excel file"""
     payload = {
-        "meta": {
-            "empresa": "Test Company",
-            "nif": "123456789",
-            "mes": 3
+        "company": {
+            "name": "Test Company",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
         },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
+        "year": 2025,
         "entries": [
             {
                 "day": 1,
@@ -27,15 +34,10 @@ def test_mapa_diario_valid_request_returns_excel(client):
                 "location": "Test location",
                 "start_time": "09:00",
                 "end_time": "10:00",
-                "percentagem": 100
+                "percentagem": 100,
             }
         ],
-        "funcionario": {
-            "nome_completo": "Test Employee",
-            "morada": "Test Address",
-            "nif": "987654321"
-        },
-        "holidays": [5, 25]
+        "holidays": [5, 25],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -49,11 +51,19 @@ def test_mapa_diario_valid_request_returns_excel(client):
 def test_mapa_diario_invalid_month_returns_422(client):
     """Test that invalid month returns validation error"""
     payload = {
-        "meta": {
-            "mes": 13  # Invalid month
+        "company": {
+            "name": "Test Company",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
         },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 13,  # Invalid month
         "entries": [],
-        "holidays": []
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -62,7 +72,7 @@ def test_mapa_diario_invalid_month_returns_422(client):
     data = response.json()
     assert data["error"] == "ValidationError"
     assert any(
-        "mes" in str(err.get("loc", ()))
+        "month" in str(err.get("loc", ()))
         for err in data["details"]
     )
 
@@ -70,8 +80,18 @@ def test_mapa_diario_invalid_month_returns_422(client):
 def test_mapa_diario_missing_required_fields_returns_422(client):
     """Test that missing required fields return validation error"""
     payload = {
-        "entries": []
-    }  # Missing meta.mes
+        "company": {
+            "name": "Test Company",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "entries": [],
+    }  # Missing month
     
     response = client.post("/reports/mapa-diario", json=payload)
     
@@ -79,7 +99,7 @@ def test_mapa_diario_missing_required_fields_returns_422(client):
     data = response.json()
     assert data["error"] == "ValidationError"
     assert any(
-        "meta" in str(err.get("loc", ()))
+        "month" in str(err.get("loc", ()))
         for err in data["details"]
     )
 
@@ -87,11 +107,19 @@ def test_mapa_diario_missing_required_fields_returns_422(client):
 def test_mapa_diario_invalid_holidays_filtered_like_legacy(client):
     """Invalid holiday values are dropped (same as legacy /generate-excel)."""
     payload = {
-        "meta": {
-            "mes": 3
+        "company": {
+            "name": "Test Company",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
         },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "holidays": [32, "invalid", 5]
+        "holidays": [32, "invalid", 5],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)

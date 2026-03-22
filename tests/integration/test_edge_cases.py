@@ -25,10 +25,19 @@ def test_large_number_of_entries(client):
         })
     
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": entries,
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     
     response = client.post("/reports/mapa-diario", json=payload)
@@ -46,10 +55,17 @@ def test_large_number_of_entries(client):
 def test_special_characters_in_text_fields(client):
     """Test that special characters in text fields are handled correctly"""
     payload = {
-        "meta": {
-            "empresa": "Empresa Têst & Cía.",
-            "mes": 3
+        "company": {
+            "name": "Empresa Têst & Cía.",
+            "tax_id": "123456789",
+            "address": "Av. Teste 99",
         },
+        "employee": {
+            "name": "José María González",
+            "address": "Rua João Paulo II, nº 123",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 1,
@@ -57,10 +73,6 @@ def test_special_characters_in_text_fields(client):
                 "location": "São Paulo - SP"
             }
         ],
-        "funcionario": {
-            "nome_completo": "José María González",
-            "morada": "Rua João Paulo II, nº 123"
-        },
         "holidays": []
     }
     
@@ -77,7 +89,17 @@ def test_special_characters_in_text_fields(client):
 def test_empty_strings_vs_missing_fields(client):
     """Test difference between empty strings and missing fields"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [
             {
                 "day": 1,
@@ -86,7 +108,6 @@ def test_empty_strings_vs_missing_fields(client):
                 "percentagem": 0    # Zero value
             }
         ],
-        "funcionario": {},
         "holidays": []
     }
     
@@ -104,9 +125,18 @@ def test_empty_strings_vs_missing_fields(client):
 def test_holiday_filtering_invalid_values(client):
     """Test that invalid holiday values are filtered out"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 3,
         "entries": [],
-        "funcionario": {},
         "holidays": [5, 32, "invalid", -1, 0, 15]  # Mix of valid and invalid
     }
     
@@ -126,20 +156,38 @@ def test_month_boundary_cases(client):
     """Test month boundary values"""
     # Test month 1 (January)
     payload_jan = {
-        "meta": {"mes": 1},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 1,
         "entries": [],
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     response = client.post("/reports/mapa-diario", json=payload_jan)
     assert response.status_code == 200
     
     # Test month 12 (December)
     payload_dec = {
-        "meta": {"mes": 12},
+        "company": {
+            "name": "Test Company Ltd",
+            "tax_id": "123456789",
+            "address": "1 Test Ave",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "address": "Test Address",
+            "tax_id": "987654321",
+        },
+        "month": 12,
         "entries": [],
-        "funcionario": {},
-        "holidays": []
+        "holidays": [],
     }
     response = client.post("/reports/mapa-diario", json=payload_dec)
     assert response.status_code == 200
@@ -150,9 +198,18 @@ def test_km_month_integers_1_to_12(client):
 
     for month in range(1, 13):
         payload = {
-            "meta": {"mes": month},
+            "company": {
+                "name": "Test Company Ltd",
+                "tax_id": "123456789",
+                "address": "Av. Teste 99",
+            },
+            "employee": {
+                "name": "Test Employee",
+                "address": "Test Address",
+                "tax_id": "987654321",
+            },
+            "month": month,
             "entries": [],
-            "funcionario": {},
             "holidays": [],
         }
         response = client.post("/reports/mapa-km", json=payload)
