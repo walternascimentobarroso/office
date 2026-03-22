@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Portuguese-style NIF display: digits grouped by threes (e.g. 123.456.789)."""
+"""Portuguese tax ID (NIF) display: digits grouped in threes (e.g. 123.456.789)."""
 
 
-def format_nif_pt(value: object) -> object:
-    """Return NIF with a dot every three digits; non-digit characters are stripped first."""
+def format_pt_tax_id(value: object) -> object:
+    """Return tax ID with a dot every three digits; non-digit characters are stripped first."""
 
     if value is None:
         return None

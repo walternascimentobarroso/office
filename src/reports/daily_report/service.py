@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Mapa Diário report service."""
+"""Daily report Excel generation service."""
 
 import logging
 from datetime import date
@@ -9,7 +9,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from src.core.business_calendar import last_weekday_of_month
 from src.core.excel_cells import set_cell_value
-from src.core.nif_format_pt import format_nif_pt
+from src.core.tax_id_format_pt import format_pt_tax_id
 from src.core.utils import load_json_mapping
 from src.services.base_excel_service import (
     BaseExcelService,
@@ -21,13 +21,13 @@ from src.services.date_service import DateService
 logger = logging.getLogger(__name__)
 
 
-class MapaDiarioService(BaseExcelService):
-    """Service for generating Mapa Diário Excel reports."""
+class DailyReportService(BaseExcelService):
+    """Service for generating daily report Excel files."""
 
     def __init__(self) -> None:
-        template_path = "src/reports/mapa_diario/template.xlsx"
+        template_path = "src/reports/daily_report/template.xlsx"
         super().__init__(template_path)
-        self.mappings = load_json_mapping("src/reports/mapa_diario/mapping.json")
+        self.mappings = load_json_mapping("src/reports/daily_report/mapping.json")
 
     def fill_header(
         self,
@@ -41,8 +41,8 @@ class MapaDiarioService(BaseExcelService):
             value = meta.get(field)
             if value is None:
                 continue
-            if field == "nif":
-                value = format_nif_pt(value)
+            if field == "tax_id":
+                value = format_pt_tax_id(value)
             set_cell_value(ws, cell, value)
             logger.debug("Filled header %s with %s: %s", cell, field, value)
 
@@ -76,26 +76,27 @@ class MapaDiarioService(BaseExcelService):
     ) -> None:
         """Fill footer cells from employee data and computed last business day."""
 
-        month = DateService.resolve_month(data.get("month") or data.get("meta", {}).get("mes"))
-        year = data.get("year") or date.today().year
+        month = DateService.resolve_month(
+            data.get("month") or (data.get("meta") or {}).get("month"),
+        )
+        year = date.today().year
         employee = data.get("employee") or {}
 
-        funcionario = {
-            "nome_completo": employee.get("name"),
-            "morada": employee.get("address"),
-            "nif": employee.get("tax_id"),
-            "vehicle_matricula": employee.get("vehicle_plate"),
+        footer_values = {
+            "full_name": employee.get("name"),
+            "address": employee.get("address"),
+            "tax_id": employee.get("tax_id"),
+            "vehicle_plate": employee.get("vehicle_plate"),
         }
 
         for field, cell in footer_mappings.items():
-            if field == "ultimo_dia_util_mes":
+            if field == "last_business_day_of_month":
                 set_cell_value(ws, cell, last_weekday_of_month(year, month))
-                logger.debug("Filled footer %s with ultimo_dia_util_mes", cell)
+                logger.debug("Filled footer %s with last_business_day_of_month", cell)
                 continue
-            if isinstance(funcionario, dict):
-                value = funcionario.get(field)
-                if value is not None:
-                    if field == "nif":
-                        value = format_nif_pt(value)
-                    set_cell_value(ws, cell, value)
-                    logger.debug("Filled footer %s with %s: %s", cell, field, value)
+            value = footer_values.get(field)
+            if value is not None:
+                if field == "tax_id":
+                    value = format_pt_tax_id(value)
+                set_cell_value(ws, cell, value)
+                logger.debug("Filled footer %s with %s: %s", cell, field, value)

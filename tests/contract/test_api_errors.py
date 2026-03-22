@@ -16,7 +16,7 @@ def test_malformed_json_returns_422(client):
     """Malformed JSON body yields 422 from Starlette/FastAPI."""
 
     response = client.post(
-        "/reports/mapa-diario",
+        "/reports/daily-report",
         data="{invalid json",
         headers={"Content-Type": "application/json"},
     )
@@ -28,7 +28,7 @@ def test_missing_content_type_still_parses_json_body(client):
     """FastAPI expects explicit JSON content-type for request body in this contract."""
 
     response = client.post(
-        "/reports/mapa-diario",
+        "/reports/daily-report",
         content='{"company": {"name": "ACME", "tax_id": "123", "address": "Rua X"}, "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"}, "month": 3, "entries": []}',
         headers={"Content-Type": "application/json"},
     )
@@ -36,8 +36,8 @@ def test_missing_content_type_still_parses_json_body(client):
     assert response.status_code == 200
 
 
-def test_invalid_percentagem_range_returns_422(client):
-    """Test that percentagem outside 0-100 returns validation error"""
+def test_invalid_percentage_range_returns_422(client):
+    """Test that percentage outside 0-100 returns validation error"""
     payload = {
         "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
         "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"},
@@ -45,19 +45,19 @@ def test_invalid_percentagem_range_returns_422(client):
         "entries": [
             {
                 "day": 1,
-                "percentagem": 150  # Invalid percentage
+                "percentage": 150  # Invalid percentage
             }
         ],
         "holidays": []
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
     assert any(
-        "percentagem" in str(err.get("loc", ()))
+        "percentage" in str(err.get("loc", ()))
         for err in data.get("details", [])
     )
 
@@ -71,9 +71,9 @@ def test_empty_entries_list_allowed(client):
         "entries": [],  # Empty list allowed
         "holidays": []
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 200
 
 
@@ -91,9 +91,9 @@ def test_missing_optional_fields_allowed(client):
         ],
         "holidays": []
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 200
 
 
@@ -105,7 +105,7 @@ def test_invalid_endpoint_returns_404(client):
         "month": 3,
         "entries": []
     }
-    
+
     response = client.post("/reports/invalid-report", json=payload)
-    
+
     assert response.status_code == 404

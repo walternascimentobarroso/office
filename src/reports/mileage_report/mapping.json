@@ -1,0 +1,25 @@
+{
+  "header": {
+    "company_name": "A4",
+    "company_address": "B5",
+    "tax_id": "C6",
+    "month": "E6"
+  },
+  "rows": {
+    "start_row": 9,
+    "columns": {
+      "day": "A",
+      "origin": "B",
+      "destination": "C",
+      "description": "D",
+      "distance_km": "F"
+    }
+  },
+  "footer": {
+    "full_name": "B45",
+    "address": "B46",
+    "tax_id": "E45",
+    "vehicle_plate": "E46",
+    "last_business_day_of_month": "B47"
+  }
+}

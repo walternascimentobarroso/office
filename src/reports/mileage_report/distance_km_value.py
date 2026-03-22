@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Parse ``n_kms`` from JSON (strings with thousands/decimals) to a float for Excel."""
+"""Parse ``distance_km`` from JSON (strings with thousands/decimals) to a float for Excel."""
 
 import re
 
 
-def parse_n_kms_value(value: object) -> float | None:
+def parse_distance_km_value(value: object) -> float | None:
     """
-    Convert API ``n_kms`` to float.
+    Convert API ``distance_km`` to float.
 
-    **Portuguese-style input:** a vírgula é sempre o separador **decimal**.
-    Ex.: ``12,5`` → 12.5; ``363,000`` → 363.0 (três casas decimais, não 363 mil).
+    **European-style input:** comma is always the **decimal** separator.
+    E.g. ``12,5`` → 12.5; ``363,000`` → 363.0 (three decimal places, not 363 thousand).
 
-    Parte inteira pode usar ponto como milhares: ``1.234,56`` → 1234.56.
+    Integer part may use dot as thousands: ``1.234,56`` → 1234.56.
 
-    Sem vírgula: ``1.234.567`` (grupos de 3) → milhares; caso contrário ``float(s)``.
+    Without comma: ``1.234.567`` (groups of 3) → thousands; otherwise ``float(s)``.
     """
 
     if value is None:

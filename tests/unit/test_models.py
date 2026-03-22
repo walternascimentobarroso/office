@@ -1,54 +1,53 @@
 # -*- coding: utf-8 -*-
-"""Unit tests for Pydantic schemas (Mapa Diário)."""
+"""Unit tests for Pydantic schemas (daily report)."""
 
 import pytest
 from pydantic import ValidationError
 
-from src.schemas.mapa_diario import Entry, MapaDiarioRequest, Meta, Funcionario
+from src.schemas.daily_report import Company, DailyReportRequest, Employee, Entry
 
 
-class TestMeta:
-    """Tests for Meta (CompanyModel) model."""
+class TestCompany:
+    """Tests for Company (CompanyModel) model."""
 
-    def test_meta_all_fields(self) -> None:
-        meta = Meta(name="Acme Corp", tax_id="123456", address="Rua X")
-        assert meta.name == "Acme Corp"
-        assert meta.tax_id == "123456"
-        assert meta.address == "Rua X"
+    def test_company_all_fields(self) -> None:
+        company = Company(name="Acme Corp", tax_id="123456", address="Street X")
+        assert company.name == "Acme Corp"
+        assert company.tax_id == "123456"
+        assert company.address == "Street X"
 
-    def test_meta_required_fields(self) -> None:
+    def test_company_required_fields(self) -> None:
         with pytest.raises(ValidationError):
-            Meta(name="x")
+            Company(name="x")
 
 
+class TestEmployee:
+    """Tests for Employee (EmployeeModel) model."""
 
-class TestFuncionario:
-    """Tests for Funcionario (EmployeeModel) model."""
-
-    def test_funcionario_all_fields(self) -> None:
-        f = Funcionario(name="Ana Costa", address="Rua X", tax_id="999")
-        assert f.name == "Ana Costa"
-        assert f.address == "Rua X"
-        assert f.tax_id == "999"
+    def test_employee_all_fields(self) -> None:
+        employee = Employee(name="Ana Costa", address="Street X", tax_id="999")
+        assert employee.name == "Ana Costa"
+        assert employee.address == "Street X"
+        assert employee.tax_id == "999"
 
 
 class TestEntry:
     """Tests for Entry model."""
 
-    def test_entry_percentagem_invalid(self) -> None:
+    def test_entry_percentage_invalid(self) -> None:
         with pytest.raises(ValidationError):
-            Entry(percentagem=-1)
+            Entry(percentage=-1)
         with pytest.raises(ValidationError):
-            Entry(percentagem=101)
+            Entry(percentage=101)
 
 
-class TestMapaDiarioRequest:
-    """Tests for MapaDiarioRequest model."""
+class TestDailyReportRequest:
+    """Tests for DailyReportRequest model."""
 
     def test_valid_request_full_data(self) -> None:
-        request = MapaDiarioRequest(
-            company={"name": "Corp", "tax_id": "123", "address": "Rua X"},
-            employee={"name": "Ana Costa", "tax_id": "999", "address": "Rua X"},
+        request = DailyReportRequest(
+            company={"name": "Corp", "tax_id": "123", "address": "Street X"},
+            employee={"name": "Ana Costa", "tax_id": "999", "address": "Street X"},
             month=3,
             entries=[
                 {
@@ -57,31 +56,31 @@ class TestMapaDiarioRequest:
                     "location": "Office",
                     "start_time": "09:00",
                     "end_time": "10:00",
-                    "percentagem": 75,
+                    "percentage": 75,
                 },
             ],
         )
         assert len(request.entries) == 1
         assert request.company.name == "Corp"
-        assert request.entries[0].percentagem == 75
+        assert request.entries[0].percentage == 75
 
     def test_holidays_normalized_drops_invalid(self) -> None:
-        r = MapaDiarioRequest(
-            company={"name": "Corp", "tax_id": "123", "address": "Rua X"},
-            employee={"name": "Ana Costa", "tax_id": "999", "address": "Rua X"},
+        request = DailyReportRequest(
+            company={"name": "Corp", "tax_id": "123", "address": "Street X"},
+            employee={"name": "Ana Costa", "tax_id": "999", "address": "Street X"},
             month=3,
             holidays=[1, 32, 0, 5],
         )
-        assert r.holidays == [1, 5]
+        assert request.holidays == [1, 5]
 
     def test_extra_fields_ignored(self) -> None:
-        r = MapaDiarioRequest.model_validate(
+        request = DailyReportRequest.model_validate(
             {
-                "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
+                "company": {"name": "Corp", "tax_id": "123", "address": "Street X"},
                 "employee": {"name": "Ana", "tax_id": "123", "address": "Address"},
                 "month": 3,
                 "entries": [],
                 "extra_top": "ignored",
             }
         )
-        assert "extra_top" not in r.model_dump()
+        assert "extra_top" not in request.model_dump()

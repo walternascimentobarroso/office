@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Contract tests for POST /reports/mapa-diario endpoint"""
+"""Contract tests for POST /reports/daily-report endpoint"""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,13 +12,13 @@ def client():
     return TestClient(app)
 
 
-def test_mapa_diario_valid_request_returns_excel(client):
+def test_daily_report_valid_request_returns_excel(client):
     """Test that valid request returns Excel file"""
     payload = {
         "company": {
             "name": "Test Company",
-            "tax_id": "123456789",
             "address": "1 Test Ave",
+            "tax_id": "123456789",
         },
         "employee": {
             "name": "Test Employee",
@@ -26,7 +26,6 @@ def test_mapa_diario_valid_request_returns_excel(client):
             "tax_id": "987654321",
         },
         "month": 3,
-        "year": 2025,
         "entries": [
             {
                 "day": 1,
@@ -34,21 +33,21 @@ def test_mapa_diario_valid_request_returns_excel(client):
                 "location": "Test location",
                 "start_time": "09:00",
                 "end_time": "10:00",
-                "percentagem": 100,
+                "percentage": 100,
             }
         ],
         "holidays": [5, 25],
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     assert "attachment; filename=" in response.headers.get("content-disposition", "")
     assert b"PK" in response.content  # XLSX files start with PK (ZIP header)
 
 
-def test_mapa_diario_invalid_month_returns_422(client):
+def test_daily_report_invalid_month_returns_422(client):
     """Test that invalid month returns validation error"""
     payload = {
         "company": {
@@ -65,9 +64,9 @@ def test_mapa_diario_invalid_month_returns_422(client):
         "entries": [],
         "holidays": [],
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
@@ -77,7 +76,7 @@ def test_mapa_diario_invalid_month_returns_422(client):
     )
 
 
-def test_mapa_diario_missing_required_fields_returns_422(client):
+def test_daily_report_missing_required_fields_returns_422(client):
     """Test that missing required fields return validation error"""
     payload = {
         "company": {
@@ -92,9 +91,9 @@ def test_mapa_diario_missing_required_fields_returns_422(client):
         },
         "entries": [],
     }  # Missing month
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 422
     data = response.json()
     assert data["error"] == "ValidationError"
@@ -104,7 +103,7 @@ def test_mapa_diario_missing_required_fields_returns_422(client):
     )
 
 
-def test_mapa_diario_invalid_holidays_filtered_like_legacy(client):
+def test_daily_report_invalid_holidays_filtered_like_legacy(client):
     """Invalid holiday values are dropped (same as legacy /generate-excel)."""
     payload = {
         "company": {
@@ -121,7 +120,7 @@ def test_mapa_diario_invalid_holidays_filtered_like_legacy(client):
         "entries": [],
         "holidays": [32, "invalid", 5],
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
-    
+
+    response = client.post("/reports/daily-report", json=payload)
+
     assert response.status_code == 200

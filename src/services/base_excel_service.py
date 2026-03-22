@@ -70,7 +70,7 @@ def fill_entry_row_cells(
     *,
     percentage_under_100_fill: str,
 ) -> None:
-    """Write one entry row; percentagem uses Excel % format and optional fill."""
+    """Write one entry row; percentage uses Excel % format and optional fill."""
 
     for field, col in columns.items():
         value = entry.get(field)
@@ -78,7 +78,7 @@ def fill_entry_row_cells(
             continue
         cell_addr = f"{col}{row_num}"
         cell = resolve_writable_cell(ws, cell_addr)
-        if field == "percentagem":
+        if field == "percentage":
             cell.value = value / 100
             cell.number_format = "0%"
             if value < 100:
@@ -117,10 +117,10 @@ class BaseExcelService(ABC):
                 company = data.get("company", {})
                 # maintain mapping keys for existing templates
                 meta_data = {
-                    "empresa": company.get("name"),
-                    "nif": company.get("tax_id"),
-                    "endereco": company.get("address"),
-                    "mes": data.get("month"),
+                    "company_name": company.get("name"),
+                    "tax_id": company.get("tax_id"),
+                    "company_address": company.get("address"),
+                    "month": data.get("month"),
                 }
 
             self.fill_header(ws, meta_data, mappings.get("header", {}))
@@ -178,8 +178,10 @@ class BaseExcelService(ABC):
     def apply_styles(self, ws: Worksheet, data: Dict[str, Any]) -> None:
         """Highlight column A: holidays take priority over weekends."""
 
-        month_num = DateService.resolve_month(data.get("month") or data.get("meta", {}).get("mes"))
-        year = data.get("year") or date.today().year
+        month_num = DateService.resolve_month(
+            data.get("month") or (data.get("meta") or {}).get("month"),
+        )
+        year = date.today().year
         weekend_days = DateService.get_weekend_days(month_num, year)
         holiday_days = set(data.get("holidays", []))
 

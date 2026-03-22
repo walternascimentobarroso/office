@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from src.api.routes import mapa_diario, mapa_km
+from src.api.routes import daily_report, mileage_report
 from src.core.config import get_config
 from src.logging_config import setup_logging
 
@@ -30,8 +30,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(mapa_diario.router)
-app.include_router(mapa_km.router)
+app.include_router(daily_report.router)
+app.include_router(mileage_report.router)
 
 
 @app.exception_handler(RequestValidationError)

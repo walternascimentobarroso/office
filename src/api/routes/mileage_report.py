@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""API routes for Mapa KM report."""
+"""API routes for the mileage report."""
 
 import logging
 from datetime import datetime, timezone
@@ -12,8 +12,8 @@ from src.core.exceptions import (
     MappingError,
     TemplateLoadError,
 )
-from src.reports.mapa_km.service import MapaKmService
-from src.schemas.mapa_km import MapaKmRequest
+from src.reports.mileage_report.service import MileageReportService
+from src.schemas.mileage_report import MileageReportRequest
 from src.services.date_service import DateService
 
 logger = logging.getLogger(__name__)
@@ -21,19 +21,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _generate_filename(request: MapaKmRequest) -> str:
-    mes_num = DateService.resolve_month(request.month)
-    mes_safe = str(mes_num)
+def _generate_filename(request: MileageReportRequest) -> str:
+    month_num = DateService.resolve_month(request.month)
+    month_safe = str(month_num)
     timestamp_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return f"relatorio_{mes_safe}_{timestamp_iso}.xlsx"
+    return f"report_{month_safe}_{timestamp_iso}.xlsx"
 
 
-@router.post("/reports/mapa-km", response_model=None)
-async def generate_mapa_km(request: MapaKmRequest) -> StreamingResponse | JSONResponse:
-    """Generate Mapa KM Excel report."""
+@router.post("/reports/mileage-report", response_model=None)
+async def generate_mileage_report(
+    request: MileageReportRequest,
+) -> StreamingResponse | JSONResponse:
+    """Generate mileage report Excel file."""
     try:
         logger.info(
-            "Mapa KM generation request received",
+            "Mileage report generation request received",
             extra={
                 "extra_data": {
                     "company_fields": len(
@@ -44,14 +46,14 @@ async def generate_mapa_km(request: MapaKmRequest) -> StreamingResponse | JSONRe
             },
         )
 
-        service = MapaKmService()
+        service = MileageReportService()
         data = request.model_dump()
         excel_stream = service.generate(data, service.mappings)
 
         filename = _generate_filename(request)
 
         logger.info(
-            "Mapa KM generation successful",
+            "Mileage report generation successful",
             extra={
                 "extra_data": {
                     "filename": filename,
@@ -78,7 +80,7 @@ async def generate_mapa_km(request: MapaKmRequest) -> StreamingResponse | JSONRe
         )
 
     except Exception as e:
-        logger.error("Unexpected error in /reports/mapa-km: %s", e, exc_info=True)
+        logger.error("Unexpected error in /reports/mileage-report: %s", e, exc_info=True)
         return JSONResponse(
             status_code=500,
             content={

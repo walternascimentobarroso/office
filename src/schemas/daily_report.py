@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Pydantic schemas for Mapa Diário report."""
+"""Pydantic schemas for the daily report."""
 
 from typing import List, Optional
 
@@ -16,16 +16,15 @@ class Entry(BaseModel):
     location: Optional[str] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
-    percentagem: Optional[int] = Field(None, ge=0, le=100)
+    percentage: Optional[int] = Field(None, ge=0, le=100)
 
 
-# Backward compatibility aliases for legacy model names
-Meta = CompanyModel
-Funcionario = EmployeeModel
+Company = CompanyModel
+Employee = EmployeeModel
 
 
-class MapaDiarioRequest(BaseReportRequest):
-    """Request schema for Mapa Diário report."""
+class DailyReportRequest(BaseReportRequest):
+    """Request schema for the daily report."""
 
     entries: List[Entry] = Field(default_factory=list)
 

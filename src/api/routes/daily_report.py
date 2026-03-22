@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""API routes for Mapa Diário report."""
+"""API routes for the daily report."""
 
 import logging
 from datetime import datetime, timezone
@@ -12,36 +12,36 @@ from src.core.exceptions import (
     MappingError,
     TemplateLoadError,
 )
-from src.reports.mapa_diario.service import MapaDiarioService
-from src.schemas.mapa_diario import MapaDiarioRequest
+from src.reports.daily_report.service import DailyReportService
+from src.schemas.daily_report import DailyReportRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-def _generate_filename(request: MapaDiarioRequest) -> str:
-    mes_label = str(request.month)
-    mes_safe = "".join(
-        c for c in mes_label if c.isalnum() or c in (" ", "-", "_")
+def _generate_filename(request: DailyReportRequest) -> str:
+    month_label = str(request.month)
+    month_safe = "".join(
+        c for c in month_label if c.isalnum() or c in (" ", "-", "_")
     )[:20]
     timestamp_iso = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return f"relatorio_{mes_safe}_{timestamp_iso}.xlsx"
+    return f"report_{month_safe}_{timestamp_iso}.xlsx"
 
 
-@router.post("/reports/mapa-diario", response_model=None)
-async def generate_mapa_diario(
-    request: MapaDiarioRequest,
+@router.post("/reports/daily-report", response_model=None)
+async def generate_daily_report(
+    request: DailyReportRequest,
 ) -> StreamingResponse | JSONResponse:
     """
-    Generate Mapa Diário Excel file from structured JSON (legacy /generate-excel behaviour).
+    Generate daily report Excel file from structured JSON.
 
-    Returns an .xlsx attachment with weekend/holiday column A styling, percentagem formatting,
-    and footer including último dia útil do mês.
+    Returns an .xlsx attachment with weekend/holiday column A styling, percentage formatting,
+    and footer including last business day of the month.
     """
     try:
         logger.info(
-            "Mapa Diário generation request received",
+            "Daily report generation request received",
             extra={
                 "extra_data": {
                     "company_fields": len(
@@ -52,14 +52,14 @@ async def generate_mapa_diario(
             },
         )
 
-        service = MapaDiarioService()
+        service = DailyReportService()
         data = request.model_dump()
         excel_stream = service.generate(data, service.mappings)
 
         filename = _generate_filename(request)
 
         logger.info(
-            "Mapa Diário generation successful",
+            "Daily report generation successful",
             extra={
                 "extra_data": {
                     "filename": filename,
@@ -86,7 +86,7 @@ async def generate_mapa_diario(
         )
 
     except Exception as e:
-        logger.error("Unexpected error in /reports/mapa-diario: %s", e, exc_info=True)
+        logger.error("Unexpected error in /reports/daily-report: %s", e, exc_info=True)
         return JSONResponse(
             status_code=500,
             content={

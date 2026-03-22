@@ -3,24 +3,23 @@
 
 from datetime import date
 
-
-_PT_MONTH_NAMES = {
-    "Janeiro": 1,
-    "Fevereiro": 2,
-    "Março": 3,
-    "Abril": 4,
-    "Maio": 5,
-    "Junho": 6,
-    "Julho": 7,
-    "Agosto": 8,
-    "Setembro": 9,
-    "Outubro": 10,
-    "Novembro": 11,
-    "Dezembro": 12,
+_EN_MONTH_NAMES = {
+    "January": 1,
+    "February": 2,
+    "March": 3,
+    "April": 4,
+    "May": 5,
+    "June": 6,
+    "July": 7,
+    "August": 8,
+    "September": 9,
+    "October": 10,
+    "November": 11,
+    "December": 12,
 }
 
-_PT_MONTH_NAMES_BY_NUM = tuple(
-    name for name, _ in sorted(_PT_MONTH_NAMES.items(), key=lambda x: x[1])
+_EN_MONTH_NAMES_BY_NUM = tuple(
+    name for name, _ in sorted(_EN_MONTH_NAMES.items(), key=lambda x: x[1])
 )
 
 
@@ -28,31 +27,31 @@ class DateService:
     """Service for date-related calculations."""
 
     @staticmethod
-    def resolve_month(mes: int | str) -> int:
-        """Resolve month (1–12 or Portuguese month name) to month number."""
+    def resolve_month(month: int | str) -> int:
+        """Resolve month (1–12 or English month name) to month number."""
 
-        if isinstance(mes, int):
-            if not 1 <= mes <= 12:
-                msg = "mes must be an integer between 1 and 12"
+        if isinstance(month, int):
+            if not 1 <= month <= 12:
+                msg = "month must be an integer between 1 and 12"
                 raise ValueError(msg)
-            return mes
-        if isinstance(mes, str):
-            num = _PT_MONTH_NAMES.get(mes)
+            return month
+        if isinstance(month, str):
+            num = _EN_MONTH_NAMES.get(month)
             if num is None:
-                msg = f"Unknown month name: {mes}"
+                msg = f"Unknown month name: {month}"
                 raise ValueError(msg)
             return num
-        msg = "mes must be int (1–12) or a Portuguese month name"
+        msg = "month must be int (1–12) or an English month name"
         raise TypeError(msg)
 
     @staticmethod
-    def month_name_portuguese(month: int) -> str:
-        """Portuguese month label for Excel (1 = Janeiro, …, 12 = Dezembro)."""
+    def month_name_english(month: int) -> str:
+        """English month label for Excel (1 = January, …, 12 = December)."""
 
         if not 1 <= month <= 12:
             msg = "month must be an integer between 1 and 12"
             raise ValueError(msg)
-        return _PT_MONTH_NAMES_BY_NUM[month - 1]
+        return _EN_MONTH_NAMES_BY_NUM[month - 1]
 
     @staticmethod
     def get_weekend_days(month: int, year: int) -> set[int]:

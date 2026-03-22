@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Contract tests for POST /reports/mapa-km endpoint"""
+"""Contract tests for POST /reports/mileage-report endpoint"""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,13 +13,13 @@ def client():
     return TestClient(app)
 
 
-def test_mapa_km_valid_request_returns_excel(client):
+def test_mileage_report_valid_request_returns_excel(client):
     """Test that valid request returns Excel file"""
     payload = {
         "company": {
             "name": "Test Company",
-            "tax_id": "123456789",
             "address": "Rua Um, 1",
+            "tax_id": "123456789",
         },
         "employee": {
             "name": "João Costa",
@@ -28,20 +28,19 @@ def test_mapa_km_valid_request_returns_excel(client):
             "vehicle_plate": "34-XY-56",
         },
         "month": 3,
-        "year": 2025,
         "entries": [
             {
                 "day": 1,
-                "origem": "Braga",
-                "destino": "Lisboa",
-                "description": "Deslocação",
-                "n_kms": "363,000",
+                "origin": "Braga",
+                "destination": "Lisboa",
+                "description": "Trip",
+                "distance_km": "363,000",
             }
         ],
         "holidays": [5, 25],
     }
 
-    response = client.post("/reports/mapa-km", json=payload)
+    response = client.post("/reports/mileage-report", json=payload)
 
     assert response.status_code == 200
     assert response.headers["content-type"] == (
@@ -51,7 +50,7 @@ def test_mapa_km_valid_request_returns_excel(client):
     assert b"PK" in response.content
 
 
-def test_mapa_km_invalid_month_returns_422(client):
+def test_mileage_report_invalid_month_returns_422(client):
     """Test that invalid month returns validation error"""
     payload = {
         "company": {
@@ -69,7 +68,7 @@ def test_mapa_km_invalid_month_returns_422(client):
         "holidays": [],
     }
 
-    response = client.post("/reports/mapa-km", json=payload)
+    response = client.post("/reports/mileage-report", json=payload)
 
     assert response.status_code == 422
     data = response.json()
@@ -80,7 +79,7 @@ def test_mapa_km_invalid_month_returns_422(client):
     )
 
 
-def test_mapa_km_missing_required_fields_returns_422(client):
+def test_mileage_report_missing_required_fields_returns_422(client):
     """Test that missing required fields return validation error"""
     payload = {
         "company": {
@@ -96,7 +95,7 @@ def test_mapa_km_missing_required_fields_returns_422(client):
         "entries": [],
     }
 
-    response = client.post("/reports/mapa-km", json=payload)
+    response = client.post("/reports/mileage-report", json=payload)
 
     assert response.status_code == 422
     data = response.json()
@@ -107,7 +106,7 @@ def test_mapa_km_missing_required_fields_returns_422(client):
     )
 
 
-def test_mapa_km_invalid_holidays_filtered_like_mapa_diario(client):
+def test_mileage_report_invalid_holidays_filtered_like_daily_report(client):
     """Invalid holiday values are dropped (same as legacy /generate-excel)."""
 
     payload = {
@@ -126,6 +125,6 @@ def test_mapa_km_invalid_holidays_filtered_like_mapa_diario(client):
         "holidays": [32, "invalid", 5],
     }
 
-    response = client.post("/reports/mapa-km", json=payload)
+    response = client.post("/reports/mileage-report", json=payload)
 
     assert response.status_code == 200

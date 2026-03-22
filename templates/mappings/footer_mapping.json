@@ -1,6 +1,6 @@
 {
-  "ultimo_dia_util_mes": "N47",
-  "nome_completo": "B42",
-  "morada": "B43",
-  "nif": "D44"
+  "last_business_day_of_month": "N47",
+  "full_name": "B42",
+  "address": "B43",
+  "tax_id": "D44"
 }

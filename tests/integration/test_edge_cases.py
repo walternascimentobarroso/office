@@ -21,9 +21,9 @@ def test_large_number_of_entries(client):
         entries.append({
             "day": i + 1,
             "description": f"Activity {i+1}",
-            "percentagem": 100
+            "percentage": 100
         })
-    
+
     payload = {
         "company": {
             "name": "Test Company Ltd",
@@ -39,17 +39,12 @@ def test_large_number_of_entries(client):
         "entries": entries,
         "holidays": [],
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
+
+    response = client.post("/reports/daily-report", json=payload)
     assert response.status_code == 200
-    
-    # Verify all entries are in Excel
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Check that entries are filled (assuming row 8+)
-    # for i in range(31):
-    #     assert ws[f'A{8+i}'].value == i + 1
+    _ = wb.active
 
 
 def test_special_characters_in_text_fields(client):
@@ -69,21 +64,18 @@ def test_special_characters_in_text_fields(client):
         "entries": [
             {
                 "day": 1,
-                "description": "Reunião com João & Maria (café)",
+                "description": "Meeting with João & Maria (coffee)",
                 "location": "São Paulo - SP"
             }
         ],
         "holidays": []
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
+
+    response = client.post("/reports/daily-report", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Verify special characters are preserved
-    # assert "Têst & Cía" in str(ws['B2'].value)
+    _ = wb.active
 
 
 def test_empty_strings_vs_missing_fields(client):
@@ -105,21 +97,17 @@ def test_empty_strings_vs_missing_fields(client):
                 "day": 1,
                 "description": "",  # Empty string
                 "location": None,   # Missing field
-                "percentagem": 0    # Zero value
+                "percentage": 0    # Zero value
             }
         ],
         "holidays": []
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
+
+    response = client.post("/reports/daily-report", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Empty string should be written as empty, None should leave cell unchanged
-    # assert ws['B8'].value == ""  # Empty string
-    # assert ws['E8'].value is None or ws['E8'].value == ""  # None becomes empty (start_time col)
+    _ = wb.active
 
 
 def test_holiday_filtering_invalid_values(client):
@@ -139,22 +127,16 @@ def test_holiday_filtering_invalid_values(client):
         "entries": [],
         "holidays": [5, 32, "invalid", -1, 0, 15]  # Mix of valid and invalid
     }
-    
-    response = client.post("/reports/mapa-diario", json=payload)
+
+    response = client.post("/reports/daily-report", json=payload)
     assert response.status_code == 200
-    
+
     wb = load_workbook(BytesIO(response.content))
-    ws = wb.active
-    
-    # Only valid holidays (5, 15) should be styled
-    # assert ws['A5'].fill.fgColor.rgb == "FFFFFFE0"  # Holiday style
-    # assert ws['A15'].fill.fgColor.rgb == "FFFFFFE0"
-    # assert ws['A32'] is None or ws['A32'].fill.fgColor.rgb != "FFFFFFE0"  # Invalid day not styled
+    _ = wb.active
 
 
 def test_month_boundary_cases(client):
     """Test month boundary values"""
-    # Test month 1 (January)
     payload_jan = {
         "company": {
             "name": "Test Company Ltd",
@@ -170,10 +152,9 @@ def test_month_boundary_cases(client):
         "entries": [],
         "holidays": [],
     }
-    response = client.post("/reports/mapa-diario", json=payload_jan)
+    response = client.post("/reports/daily-report", json=payload_jan)
     assert response.status_code == 200
-    
-    # Test month 12 (December)
+
     payload_dec = {
         "company": {
             "name": "Test Company Ltd",
@@ -189,12 +170,12 @@ def test_month_boundary_cases(client):
         "entries": [],
         "holidays": [],
     }
-    response = client.post("/reports/mapa-diario", json=payload_dec)
+    response = client.post("/reports/daily-report", json=payload_dec)
     assert response.status_code == 200
 
 
 def test_km_month_integers_1_to_12(client):
-    """Mapa KM accepts meta.mes as 1–12 like Mapa Diário."""
+    """Mileage report accepts month as 1–12 like daily report."""
 
     for month in range(1, 13):
         payload = {
@@ -212,5 +193,5 @@ def test_km_month_integers_1_to_12(client):
             "entries": [],
             "holidays": [],
         }
-        response = client.post("/reports/mapa-km", json=payload)
+        response = client.post("/reports/mileage-report", json=payload)
         assert response.status_code == 200, f"Failed for month {month}"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual smoke test for POST /reports/mapa-diario."""
+"""Manual smoke test for POST /reports/daily-report."""
 
 import asyncio
 
@@ -8,7 +8,17 @@ import httpx
 
 async def test_endpoint() -> None:
     data = {
-        "meta": {"empresa": "Test Company", "mes": 1},
+        "company": {
+            "name": "Test Company",
+            "tax_id": "123456789",
+            "address": "1 Test St",
+        },
+        "employee": {
+            "name": "Test Employee",
+            "tax_id": "987654321",
+            "address": "2 Test St",
+        },
+        "month": 1,
         "entries": [
             {
                 "day": 1,
@@ -18,12 +28,13 @@ async def test_endpoint() -> None:
                 "end_time": "17:00",
             }
         ],
+        "holidays": [],
     }
 
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                "http://localhost:8000/reports/mapa-diario",
+                "http://localhost:8000/reports/daily-report",
                 json=data,
             )
             print(f"Status: {response.status_code}")
