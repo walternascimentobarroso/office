@@ -37,14 +37,14 @@ class MileageReportService(BaseExcelService):
         meta: Dict[str, Any],
         header_mappings: Dict[str, str],
     ) -> None:
-        """Fill header cells; ``month`` (1–12) is written as English month name in the template."""
+        """Fill header cells; ``month`` (1–12) is written as Portuguese month name in the template."""
 
         for field, cell in header_mappings.items():
             value = meta.get(field)
             if value is None:
                 continue
             if field == "month" and isinstance(value, int):
-                value = DateService.month_name_english(value)
+                value = DateService.month_name_portuguese(value)
             elif field == "tax_id":
                 value = format_pt_tax_id(value)
             set_cell_value(ws, cell, value)

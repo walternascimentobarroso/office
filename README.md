@@ -159,7 +159,7 @@ Generates the **mileage report** (template under `src/reports/mileage_report/`).
 
 **`month`** (1–12):
 
-- Written to Excel as the **English month name** (e.g. `3` → `March`).
+- Written to Excel as the **Portuguese month name** (e.g. `3` → `Março`).
 
 **`entries`** (trip rows):
 

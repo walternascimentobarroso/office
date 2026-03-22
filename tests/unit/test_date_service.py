@@ -45,8 +45,8 @@ class TestDateService:
     def test_resolve_month_int(self) -> None:
         assert DateService.resolve_month(7) == 7
 
-    def test_resolve_month_english_name(self) -> None:
-        assert DateService.resolve_month("March") == 3
+    def test_resolve_month_portuguese_name(self) -> None:
+        assert DateService.resolve_month("Março") == 3
 
     def test_resolve_month_invalid_int(self) -> None:
         with pytest.raises(ValueError):
@@ -56,13 +56,13 @@ class TestDateService:
         with pytest.raises(ValueError):
             DateService.resolve_month("NotAMonth")
 
-    def test_month_name_english(self) -> None:
-        assert DateService.month_name_english(1) == "January"
-        assert DateService.month_name_english(3) == "March"
-        assert DateService.month_name_english(12) == "December"
+    def test_month_name_portuguese(self) -> None:
+        assert DateService.month_name_portuguese(1) == "Janeiro"
+        assert DateService.month_name_portuguese(3) == "Março"
+        assert DateService.month_name_portuguese(12) == "Dezembro"
 
-    def test_month_name_english_invalid(self) -> None:
+    def test_month_name_portuguese_invalid(self) -> None:
         with pytest.raises(ValueError):
-            DateService.month_name_english(0)
+            DateService.month_name_portuguese(0)
         with pytest.raises(ValueError):
-            DateService.month_name_english(13)
+            DateService.month_name_portuguese(13)
