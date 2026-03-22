@@ -32,6 +32,13 @@ clean:
 	find . -type f -name "*.pyd" -delete
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
 
+clear-branches:
+	@echo ""
+	@git pull; git branch | grep -vE "(^\*|master|main|develop)" | xargs -r git branch -d
+	@echo ""
+	@echo "${GREEN}All old merged removed!${NOCOLOR}"
+	@echo ""
+
 # Show available commands
 help:
 	@echo "📋 Available commands:"
