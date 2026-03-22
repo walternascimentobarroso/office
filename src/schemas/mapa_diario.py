@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.schemas.base_report import BaseReportRequest
+from src.schemas.base_report import BaseReportRequest, CompanyModel, EmployeeModel
 
 
 class Entry(BaseModel):
@@ -17,6 +17,11 @@ class Entry(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     percentagem: Optional[int] = Field(None, ge=0, le=100)
+
+
+# Backward compatibility aliases for legacy model names
+Meta = CompanyModel
+Funcionario = EmployeeModel
 
 
 class MapaDiarioRequest(BaseReportRequest):

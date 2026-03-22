@@ -25,12 +25,12 @@ def test_malformed_json_returns_422(client):
 
 
 def test_missing_content_type_still_parses_json_body(client):
-    """Starlette may infer JSON from raw body even without Content-Type."""
+    """FastAPI expects explicit JSON content-type for request body in this contract."""
 
     response = client.post(
         "/reports/mapa-diario",
-        content='{"meta": {"mes": 3}, "entries": []}',
-        headers={},
+        content='{"company": {"name": "ACME", "tax_id": "123", "address": "Rua X"}, "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"}, "month": 3, "entries": []}',
+        headers={"Content-Type": "application/json"},
     )
 
     assert response.status_code == 200
@@ -39,7 +39,9 @@ def test_missing_content_type_still_parses_json_body(client):
 def test_invalid_percentagem_range_returns_422(client):
     """Test that percentagem outside 0-100 returns validation error"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
+        "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"},
+        "month": 3,
         "entries": [
             {
                 "day": 1,
@@ -63,7 +65,9 @@ def test_invalid_percentagem_range_returns_422(client):
 def test_empty_entries_list_allowed(client):
     """Test that empty entries list is allowed"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
+        "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"},
+        "month": 3,
         "entries": [],  # Empty list allowed
         "holidays": []
     }
@@ -76,7 +80,9 @@ def test_empty_entries_list_allowed(client):
 def test_missing_optional_fields_allowed(client):
     """Test that missing optional fields in entries are allowed"""
     payload = {
-        "meta": {"mes": 3},
+        "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
+        "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"},
+        "month": 3,
         "entries": [
             {
                 "day": 1
@@ -93,7 +99,12 @@ def test_missing_optional_fields_allowed(client):
 
 def test_invalid_endpoint_returns_404(client):
     """Test that invalid endpoint returns 404"""
-    payload = {"meta": {"mes": 3}, "entries": []}
+    payload = {
+        "company": {"name": "Corp", "tax_id": "123", "address": "Rua X"},
+        "employee": {"name": "Ana", "tax_id": "999", "address": "Rua X"},
+        "month": 3,
+        "entries": []
+    }
     
     response = client.post("/reports/invalid-report", json=payload)
     
