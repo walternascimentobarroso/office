@@ -22,6 +22,7 @@ class DailyEntry(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "daily_entries"
     __table_args__ = (
         CheckConstraint("day >= 1 AND day <= 31", name="ck_daily_entries_day_range"),
+        CheckConstraint("percentage >= 0 AND percentage <= 100", name="ck_daily_entries_percentage_range"),
         Index(
             "ix_daily_entries_report_id_active",
             "report_id",
@@ -39,5 +40,6 @@ class DailyEntry(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     location: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_time: Mapped[time | None] = mapped_column(Time(timezone=False), nullable=True)
     end_time: Mapped[time | None] = mapped_column(Time(timezone=False), nullable=True)
+    percentage: Mapped[int] = mapped_column(Integer, nullable=False, server_default="100")
 
     report: Mapped["Report"] = relationship(back_populates="daily_entries", lazy="selectin")

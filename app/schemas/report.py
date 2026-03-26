@@ -20,6 +20,7 @@ class DailyEntryCreate(BaseModel):
     location: str | None = Field(default=None, max_length=512)
     start_time: time | None = None
     end_time: time | None = None
+    percentage: int = Field(default=100, ge=0, le=100)
 
 
 class MileageEntryCreate(BaseModel):
@@ -68,6 +69,7 @@ class DailyEntryRead(AuditReadModel):
     location: str | None
     start_time: time | None
     end_time: time | None
+    percentage: int
 
 
 class MileageEntryRead(AuditReadModel):

@@ -41,16 +41,6 @@ class ReportService:
             msg = "Employee does not belong to the provided company."
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
-        existing = await self.report_repository.get_by_employee_period(
-            employee_id=payload.employee_id,
-            month=payload.month,
-            year=payload.year,
-            report_type=payload.report_type,
-        )
-        if existing is not None:
-            msg = "Report already exists for employee and period."
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
-
         report = Report(
             company_id=payload.company_id,
             employee_id=payload.employee_id,
@@ -70,6 +60,7 @@ class ReportService:
                 location=item.location,
                 start_time=item.start_time,
                 end_time=item.end_time,
+                percentage=item.percentage,
             )
             for item in payload.daily_entries
         ]
@@ -122,7 +113,6 @@ class ReportService:
         target_employee_id = update_data.get("employee_id", report.employee_id)
         target_month = update_data.get("month", report.month)
         target_year = update_data.get("year", report.year)
-        target_report_type = update_data.get("report_type", report.report_type)
 
         if target_company_id != report.company_id:
             company = await self.company_repository.get_by_id(target_company_id)
@@ -143,24 +133,6 @@ class ReportService:
         if employee.company_id != target_company_id:
             msg = "Employee does not belong to the provided company."
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
-
-        unique_changed = (
-            target_employee_id != report.employee_id
-            or target_month != report.month
-            or target_year != report.year
-            or target_report_type != report.report_type
-        )
-        if unique_changed:
-            existing = await self.report_repository.get_by_employee_period_excluding_id(
-                employee_id=target_employee_id,
-                month=target_month,
-                year=target_year,
-                report_type=target_report_type,
-                report_id=report_id,
-            )
-            if existing is not None:
-                msg = "Report already exists for employee and period."
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
         for field in (
             "company_id",
@@ -185,6 +157,7 @@ class ReportService:
                     location=item.location,
                     start_time=item.start_time,
                     end_time=item.end_time,
+                    percentage=item.percentage,
                 )
                 for item in update_data["daily_entries"]
             ]

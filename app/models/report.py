@@ -6,7 +6,7 @@ import enum
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, Integer, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, Index, Integer, text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,13 +40,6 @@ class Report(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __tablename__ = "reports"
     __table_args__ = (
-        UniqueConstraint(
-            "employee_id",
-            "month",
-            "year",
-            "report_type",
-            name="uq_reports_employee_month_year_type",
-        ),
         CheckConstraint("month >= 1 AND month <= 12", name="ck_reports_month_range"),
         CheckConstraint("year >= 2000", name="ck_reports_year_min"),
         Index(
