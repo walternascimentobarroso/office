@@ -8,7 +8,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models.report import ReportStatus
+from app.models.report import ReportStatus, ReportType
 from app.schemas.common import AuditReadModel
 
 
@@ -40,6 +40,7 @@ class ReportCreate(BaseModel):
     year: int = Field(ge=2000)
     holidays: list[int] = Field(default_factory=list)
     status: ReportStatus = ReportStatus.DRAFT
+    report_type: ReportType = ReportType.DAILY
     daily_entries: list[DailyEntryCreate] = Field(default_factory=list)
     mileage_entries: list[MileageEntryCreate] = Field(default_factory=list)
 
@@ -53,6 +54,7 @@ class ReportUpdate(BaseModel):
     year: int | None = Field(default=None, ge=2000)
     holidays: list[int] | None = None
     status: ReportStatus | None = None
+    report_type: ReportType | None = None
     daily_entries: list[DailyEntryCreate] | None = None
     mileage_entries: list[MileageEntryCreate] | None = None
 
@@ -87,5 +89,6 @@ class ReportRead(AuditReadModel):
     year: int
     holidays: list[int]
     status: ReportStatus
+    report_type: ReportType
     daily_entries: list[DailyEntryRead] = Field(default_factory=list)
     mileage_entries: list[MileageEntryRead] = Field(default_factory=list)

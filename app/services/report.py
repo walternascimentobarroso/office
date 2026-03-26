@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.daily_entry import DailyEntry
 from app.models.mileage_entry import MileageEntry
-from app.models.report import Report
+from app.models.report import Report, ReportType
 from app.repositories.company import CompanyRepository
 from app.repositories.employee import EmployeeRepository
 from app.repositories.report import ReportRepository
@@ -45,6 +45,7 @@ class ReportService:
             employee_id=payload.employee_id,
             month=payload.month,
             year=payload.year,
+            report_type=payload.report_type,
         )
         if existing is not None:
             msg = "Report already exists for employee and period."
@@ -57,6 +58,7 @@ class ReportService:
             year=payload.year,
             holidays=payload.holidays,
             status=payload.status,
+            report_type=payload.report_type,
         )
         report = await self.report_repository.add(report)
 
@@ -120,6 +122,7 @@ class ReportService:
         target_employee_id = update_data.get("employee_id", report.employee_id)
         target_month = update_data.get("month", report.month)
         target_year = update_data.get("year", report.year)
+        target_report_type = update_data.get("report_type", report.report_type)
 
         if target_company_id != report.company_id:
             company = await self.company_repository.get_by_id(target_company_id)
@@ -145,19 +148,29 @@ class ReportService:
             target_employee_id != report.employee_id
             or target_month != report.month
             or target_year != report.year
+            or target_report_type != report.report_type
         )
         if unique_changed:
             existing = await self.report_repository.get_by_employee_period_excluding_id(
                 employee_id=target_employee_id,
                 month=target_month,
                 year=target_year,
+                report_type=target_report_type,
                 report_id=report_id,
             )
             if existing is not None:
                 msg = "Report already exists for employee and period."
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
-        for field in ("company_id", "employee_id", "month", "year", "holidays", "status"):
+        for field in (
+            "company_id",
+            "employee_id",
+            "month",
+            "year",
+            "holidays",
+            "status",
+            "report_type",
+        ):
             if field in update_data:
                 setattr(report, field, update_data[field])
 
@@ -198,3 +211,18 @@ class ReportService:
             msg = "Report not found."
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=msg)
         return refreshed
+
+    async def list_by_type(
+        self,
+        *,
+        report_type: ReportType,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Report], int]:
+        reports = await self.report_repository.list_by_type(
+            report_type=report_type,
+            limit=limit,
+            offset=offset,
+        )
+        total = await self.report_repository.count_by_type(report_type=report_type)
+        return reports, total

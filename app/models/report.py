@@ -28,12 +28,25 @@ class ReportStatus(str, enum.Enum):
     REJECTED = "rejected"
 
 
+class ReportType(str, enum.Enum):
+    """Allowed types for reports."""
+
+    DAILY = "daily"
+    MILEAGE = "mileage"
+
+
 class Report(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """Monthly report for one employee."""
 
     __tablename__ = "reports"
     __table_args__ = (
-        UniqueConstraint("employee_id", "month", "year", name="uq_reports_employee_month_year"),
+        UniqueConstraint(
+            "employee_id",
+            "month",
+            "year",
+            "report_type",
+            name="uq_reports_employee_month_year_type",
+        ),
         CheckConstraint("month >= 1 AND month <= 12", name="ck_reports_month_range"),
         CheckConstraint("year >= 2000", name="ck_reports_year_min"),
         Index(
@@ -43,6 +56,16 @@ class Report(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             "year",
             postgresql_where=text("deleted_at IS NULL"),
         ),
+    )
+    _status_enum = Enum(
+        ReportStatus,
+        name="report_status",
+        values_callable=lambda enum_cls: [item.value for item in enum_cls],
+    )
+    _report_type_enum = Enum(
+        ReportType,
+        name="report_type",
+        values_callable=lambda enum_cls: [item.value for item in enum_cls],
     )
 
     company_id: Mapped[uuid.UUID] = mapped_column(
@@ -59,9 +82,14 @@ class Report(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     holidays: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False, server_default="{}")
     status: Mapped[ReportStatus] = mapped_column(
-        Enum(ReportStatus, name="report_status"),
+        _status_enum,
         nullable=False,
         server_default=ReportStatus.DRAFT.value,
+    )
+    report_type: Mapped[ReportType] = mapped_column(
+        _report_type_enum,
+        nullable=False,
+        server_default=ReportType.DAILY.value,
     )
 
     company: Mapped["Company"] = relationship(back_populates="reports", lazy="selectin")
