@@ -24,6 +24,20 @@ uv sync --group dev
 
 Equivalent: `make install` (runs `uv sync`).
 
+## Database migrations (required)
+
+Before starting the API with database endpoints (`/companies`, `/employees`, `/reports`), run migrations:
+
+```bash
+make db-upgrade
+```
+
+Equivalent:
+
+```bash
+uv run alembic upgrade head
+```
+
 ## How to run
 
 ### Development (recommended)

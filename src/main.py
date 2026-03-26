@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.routers import companies_router, employees_router, reports_router
 from src.api.routes import daily_report, mileage_report
 from src.core.config import get_config
 from src.logging_config import setup_logging
@@ -32,6 +33,9 @@ app.add_middleware(
 
 app.include_router(daily_report.router)
 app.include_router(mileage_report.router)
+app.include_router(companies_router)
+app.include_router(employees_router)
+app.include_router(reports_router)
 
 
 @app.exception_handler(RequestValidationError)

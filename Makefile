@@ -1,4 +1,4 @@
-.PHONY: up down test install clean help
+.PHONY: up down db-upgrade test install clean help
 
 # Default target
 all: help
@@ -7,6 +7,11 @@ all: help
 up:
 	@echo "🚀 Starting Excel API server..."
 	uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+# Apply database migrations (required before using DB endpoints)
+db-upgrade:
+	@echo "🗄️ Applying database migrations..."
+	uv run alembic upgrade head
 
 # Stop the application (if running in background)
 down:
@@ -44,6 +49,7 @@ help:
 	@echo "📋 Available commands:"
 	@echo "  up      - Start the FastAPI server with auto-reload"
 	@echo "  down    - Stop the server"
+	@echo "  db-upgrade - Apply database migrations (required)"
 	@echo "  test    - Run the test suite"
 	@echo "  install - Install/update dependencies"
 	@echo "  clean   - Clean cache files"
