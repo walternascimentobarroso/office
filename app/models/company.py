@@ -12,6 +12,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.employee import Employee
     from app.models.report import Report
+    from app.models.user import User
 
 
 class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -24,6 +25,11 @@ class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     employees: Mapped[list["Employee"]] = relationship(
+        back_populates="company",
+        cascade="save-update, merge",
+        lazy="selectin",
+    )
+    users: Mapped[list["User"]] = relationship(
         back_populates="company",
         cascade="save-update, merge",
         lazy="selectin",

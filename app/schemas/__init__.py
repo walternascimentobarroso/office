@@ -11,6 +11,8 @@ from app.schemas.report import (
     ReportRead,
     ReportUpdate,
 )
+from app.schemas.role import RoleCreate, RoleRead, RoleUpdate
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 
 __all__ = [
     "CompanyCreate",
@@ -26,4 +28,10 @@ __all__ = [
     "ReportCreate",
     "ReportRead",
     "ReportUpdate",
+    "RoleCreate",
+    "RoleRead",
+    "RoleUpdate",
+    "UserCreate",
+    "UserRead",
+    "UserUpdate",
 ]
