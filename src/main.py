@@ -10,12 +10,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routers import (
+    auth_router,
     companies_router,
     employees_router,
     report_types_router,
     roles_router,
     users_router,
 )
+from app.core.security import get_security_settings
 from src.core.config import get_config
 from src.logging_config import setup_logging
 
@@ -30,12 +32,13 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=get_security_settings().cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(companies_router)
 app.include_router(employees_router)
 app.include_router(report_types_router)

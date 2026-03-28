@@ -7,17 +7,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies.auth import get_current_user, require_roles
 from app.db.session import get_db_session
 from app.schemas.pagination import Page
 from app.schemas.role import RoleCreate, RoleRead, RoleUpdate
 from app.services.role import RoleService
 
-router = APIRouter(prefix="/roles", tags=["roles"])
+router = APIRouter(prefix="/roles", tags=["roles"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("", response_model=RoleRead, status_code=status.HTTP_201_CREATED)
 async def create_role(
     payload: RoleCreate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> RoleRead:
     service = RoleService(session)
@@ -55,6 +57,7 @@ async def list_roles(
 async def update_role(
     role_id: UUID,
     payload: RoleUpdate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> RoleRead:
     service = RoleService(session)
@@ -65,6 +68,7 @@ async def update_role(
 @router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_role(
     role_id: UUID,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     service = RoleService(session)

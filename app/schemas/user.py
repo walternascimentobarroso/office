@@ -22,6 +22,7 @@ class UserCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=255)
     email: str = Field(min_length=1, max_length=320)
+    password: str | None = Field(default=None, min_length=8, max_length=255)
     role_ids: list[UUID] = Field(default_factory=list)
 
 
@@ -30,6 +31,8 @@ class UserUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=255)
     email: str | None = Field(default=None, min_length=1, max_length=320)
+    password: str | None = Field(default=None, min_length=8, max_length=255)
+    is_active: bool | None = None
     role_ids: list[UUID] | None = None
 
 

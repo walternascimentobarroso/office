@@ -7,17 +7,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies.auth import get_current_user, require_roles
 from app.db.session import get_db_session
 from app.schemas.pagination import Page
 from app.schemas.report import ReportCreate, ReportRead, ReportUpdate
 from app.services.report import ReportService
 
-router = APIRouter(prefix="/reports", tags=["reports-db"])
+router = APIRouter(prefix="/reports", tags=["reports-db"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("", response_model=ReportRead, status_code=status.HTTP_201_CREATED)
 async def create_report(
     payload: ReportCreate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> ReportRead:
     service = ReportService(session)
@@ -54,6 +56,7 @@ async def list_reports(
 @router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_report(
     report_id: UUID,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     service = ReportService(session)
@@ -65,6 +68,7 @@ async def delete_report(
 async def update_report(
     report_id: UUID,
     payload: ReportUpdate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> ReportRead:
     service = ReportService(session)

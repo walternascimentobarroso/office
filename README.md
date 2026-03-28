@@ -269,6 +269,22 @@ Each report uses a **template** `.xlsx` and a **`mapping.json`** under `src/repo
 | Variable | Description |
 |----------|-------------|
 | `LOG_LEVEL` | Log level (e.g. `INFO`) |
+| `JWT_SECRET` | Secret key used to sign/verify JWT tokens |
+| `JWT_ALGORITHM` | JWT signing algorithm (default `HS256`) |
+| `ACCESS_TOKEN_TTL_MIN` | Access token TTL in minutes |
+| `REFRESH_TOKEN_TTL_DAYS` | Refresh token TTL in days |
+| `CORS_ALLOW_ORIGINS` | Allowed origins, comma-separated |
+| `OIDC_GOOGLE_CLIENT_ID` / `OIDC_GOOGLE_CLIENT_SECRET` / `OIDC_GOOGLE_REDIRECT_URI` | Google OIDC credentials |
+| `OIDC_MICROSOFT_CLIENT_ID` / `OIDC_MICROSOFT_CLIENT_SECRET` / `OIDC_MICROSOFT_REDIRECT_URI` | Microsoft OIDC credentials |
+
+## Authentication endpoints
+
+- `POST /auth/login` - local login (`company_id`, `email`, `password`)
+- `POST /auth/refresh` - rotate refresh token
+- `POST /auth/logout` - revoke refresh token family
+- `GET /auth/me` - current authenticated user
+- `GET /auth/sso/{provider}/start` - OIDC login start URL
+- `GET/POST /auth/sso/{provider}/callback` - OIDC callback exchange
 
 ## Tests
 

@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies.auth import get_current_user, require_company_access, require_roles
 from app.db.session import get_db_session
 from app.models.role import Role
 from app.models.user import User
@@ -14,7 +15,11 @@ from app.schemas.pagination import Page
 from app.schemas.user import UserCreate, UserRead, UserRoleRead, UserUpdate
 from app.services.user import UserService
 
-router = APIRouter(prefix="/companies/{company_id}/users", tags=["users"])
+router = APIRouter(
+    prefix="/companies/{company_id}/users",
+    tags=["users"],
+    dependencies=[Depends(get_current_user), Depends(require_company_access)],
+)
 
 
 def _to_user_read(user: User, roles: list[Role]) -> UserRead:
@@ -37,6 +42,7 @@ def _to_user_read(user: User, roles: list[Role]) -> UserRead:
 async def create_user(
     company_id: UUID,
     payload: UserCreate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> UserRead:
     service = UserService(session)
@@ -82,6 +88,7 @@ async def update_user(
     company_id: UUID,
     user_id: UUID,
     payload: UserUpdate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> UserRead:
     service = UserService(session)
@@ -94,6 +101,7 @@ async def update_user(
 async def delete_user(
     company_id: UUID,
     user_id: UUID,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     service = UserService(session)

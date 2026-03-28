@@ -17,6 +17,9 @@ dependencies = [
     "alembic>=1.14.0",
     "asyncpg>=0.30.0",
     "python-dotenv>=1.0.1",
+    "pyjwt>=2.12.1",
+    "authlib>=1.6.9",
+    "httpx>=0.25.2",
 ]
 
 [dependency-groups]

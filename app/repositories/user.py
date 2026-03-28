@@ -42,3 +42,12 @@ class UserRepository(BaseRepository[User]):
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    async def get_active_by_company_email(self, company_id: UUID, email: str) -> User | None:
+        stmt = self._active_stmt().where(
+            User.company_id == company_id,
+            User.email == email,
+            User.is_active.is_(True),
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

@@ -7,18 +7,24 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.dependencies.auth import get_current_user, require_company_access, require_roles
 from app.db.session import get_db_session
 from app.schemas.employee import EmployeeCreate, EmployeeRead, EmployeeUpdate
 from app.schemas.pagination import Page
 from app.services.employee import EmployeeService
 
-router = APIRouter(prefix="/companies/{company_id}/employees", tags=["employees"])
+router = APIRouter(
+    prefix="/companies/{company_id}/employees",
+    tags=["employees"],
+    dependencies=[Depends(get_current_user), Depends(require_company_access)],
+)
 
 
 @router.post("", response_model=EmployeeRead, status_code=status.HTTP_201_CREATED)
 async def create_employee(
     company_id: UUID,
     payload: EmployeeCreate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> EmployeeRead:
     service = EmployeeService(session)
@@ -62,6 +68,7 @@ async def list_employees(
 async def delete_employee(
     company_id: UUID,
     employee_id: UUID,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> Response:
     service = EmployeeService(session)
@@ -74,6 +81,7 @@ async def update_employee(
     company_id: UUID,
     employee_id: UUID,
     payload: EmployeeUpdate,
+    _: None = Depends(require_roles("admin")),
     session: AsyncSession = Depends(get_db_session),
 ) -> EmployeeRead:
     service = EmployeeService(session)

@@ -15,6 +15,7 @@ from app.repositories.role import RoleRepository
 from app.repositories.user import UserRepository
 from app.repositories.user_role import UserRoleRepository
 from app.schemas.user import UserCreate, UserUpdate
+from app.services.password import PasswordService
 from app.utils.soft_delete import mark_deleted, restore_deleted
 
 
@@ -27,6 +28,7 @@ class UserService:
         self.user_repository = UserRepository(session)
         self.role_repository = RoleRepository(session)
         self.user_role_repository = UserRoleRepository(session)
+        self.password_service = PasswordService()
 
     async def create(self, company_id: UUID, payload: UserCreate) -> User:
         await self._ensure_company_exists(company_id)
@@ -34,7 +36,15 @@ class UserService:
         role_ids = set(payload.role_ids)
         await self._validate_role_ids(role_ids)
 
-        user = User(company_id=company_id, name=payload.name, email=payload.email)
+        password_hash = (
+            self.password_service.hash_password(payload.password) if payload.password is not None else None
+        )
+        user = User(
+            company_id=company_id,
+            name=payload.name,
+            email=payload.email,
+            password_hash=password_hash,
+        )
         created = await self.user_repository.add(user)
         await self._sync_roles(user_id=created.id, target_role_ids=role_ids)
         await self.session.commit()
@@ -72,6 +82,9 @@ class UserService:
             await self._ensure_unique_email(company_id=company_id, email=new_email)
 
         role_ids_input = update_data.pop("role_ids", None)
+        password = update_data.pop("password", None)
+        if password is not None:
+            user.password_hash = self.password_service.hash_password(password)
         for field, value in update_data.items():
             setattr(user, field, value)
 
