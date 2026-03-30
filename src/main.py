@@ -13,9 +13,11 @@ from app.api.routers import (
     auth_router,
     companies_router,
     employees_router,
+    monthly_workflow_router,
     report_types_router,
     roles_router,
     users_router,
+    workflow_templates_router,
 )
 from app.core.security import get_security_settings
 from src.core.config import get_config
@@ -44,6 +46,8 @@ app.include_router(employees_router)
 app.include_router(report_types_router)
 app.include_router(roles_router)
 app.include_router(users_router)
+app.include_router(monthly_workflow_router)
+app.include_router(workflow_templates_router)
 
 
 @app.exception_handler(RequestValidationError)

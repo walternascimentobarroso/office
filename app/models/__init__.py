@@ -10,6 +10,12 @@ from app.models.report import Report, ReportStatus
 from app.models.user import User
 from app.models.user_identity import UserIdentity
 from app.models.user_role import UserRole
+from app.models.monthly_workflow import (
+    MonthlyWorkflowInstance,
+    MonthlyWorkflowTask,
+    WorkflowRecurrence,
+    WorkflowTaskTemplate,
+)
 
 __all__ = [
     "Company",
@@ -23,4 +29,8 @@ __all__ = [
     "User",
     "UserIdentity",
     "UserRole",
+    "MonthlyWorkflowInstance",
+    "MonthlyWorkflowTask",
+    "WorkflowRecurrence",
+    "WorkflowTaskTemplate",
 ]

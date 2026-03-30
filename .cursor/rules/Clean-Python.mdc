@@ -1,0 +1,162 @@
+---
+alwaysApply: true
+---
+
+# 🚀 Backend Rule — FastAPI (Clean + DRY)
+
+## 🎯 Goal
+Write clean, maintainable, and scalable backend code using:
+- DRY
+- KISS
+- YAGNI
+- Early Return
+- Clean Architecture
+
+---
+
+## 🧠 Core Principles
+
+### DRY (Don't Repeat Yourself)
+- Never duplicate logic
+- If repeated 2x → extract to function/service/decorator/helper
+
+### KISS (Keep It Simple)
+- Prefer simple solutions over complex abstractions
+- Avoid unnecessary layers
+
+### YAGNI (You Aren’t Gonna Need It)
+- Do NOT implement future features
+- Only build what is required NOW
+
+### Early Return
+- Avoid nested ifs
+- Always fail fast and return early
+
+### SRP (Single Responsibility)
+- One function = one responsibility
+- One class = one purpose
+
+---
+
+## 🧩 Architecture (MANDATORY)
+
+Follow strict separation:
+
+- Router → orchestration only (NO logic)
+- Service → business logic
+- Repository → data access
+- Dependency → object creation
+
+---
+
+## 🚫 Router Rules (FastAPI)
+
+Routers MUST be thin:
+
+❌ Forbidden:
+- Business logic
+- DB access
+- Data transformation
+
+✅ Allowed:
+- Input validation (Pydantic)
+- Call service
+- Return response
+
+Example:
+
+```python
+@router.post("/")
+async def create(data: Schema, service: Service = Depends(get_service)):
+    return await service.create(data)
+```
+
+---
+
+## 🔥 Service Rules
+
+- Contains ALL business logic
+- Must be reusable
+- Must NOT depend on FastAPI
+
+Use:
+- Early return
+- Fail fast validation
+
+---
+
+## 🗄 Repository Rules
+
+- Only DB logic
+- No business rules
+- Use BaseRepository to avoid repetition
+
+---
+
+## ♻️ Reusability (MANDATORY)
+
+Always prefer reuse via:
+
+- Base classes (BaseRepository, BaseService)
+- Helpers (utils)
+- Decorators (error handling, logging)
+- Dependencies (DI)
+
+---
+
+## ⚡ Decorators
+
+Use decorators for cross-cutting concerns:
+- Error handling
+- Logging
+- Authorization
+
+---
+
+## 🧠 Code Style
+
+### Explicit > Magic
+- Prefer readable code over clever code
+
+### Readability > Performance
+- Optimize only when necessary
+
+### Consistency > Perfection
+- Follow project patterns strictly
+
+---
+
+## ❌ Anti-Patterns (FORBIDDEN)
+
+- Fat controllers
+- Duplicated validation
+- Inline DB queries in routers/services
+- Premature abstraction
+- Overengineering
+- Deep nesting (if inside if inside if)
+
+---
+
+## ✅ Good Practices
+
+- Use @property for derived fields
+- Use dependency injection everywhere
+- Use typed schemas (Pydantic)
+- Use small, composable functions
+
+---
+
+## 🔥 Golden Rule
+
+If you copy/paste code → STOP and refactor
+
+---
+
+## 🧠 Mindset
+
+Code is read more than written.
+
+Always optimize for:
+- Clarity
+- Maintainability
+- Simplicity
