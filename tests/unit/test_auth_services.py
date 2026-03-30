@@ -6,7 +6,11 @@ from __future__ import annotations
 import uuid
 
 import pytest
+from fastapi import HTTPException
+from unittest.mock import MagicMock
 
+from app.schemas.auth import AuthenticatedUserRead, LoginResponse, TokenPairRead
+from app.services.auth import AuthService
 from app.services.password import PasswordService
 from app.services.token import TokenService
 
@@ -40,3 +44,28 @@ def test_token_service_rejects_invalid_token() -> None:
     service = TokenService()
     with pytest.raises(ValueError):
         service.decode_token("invalid.token.value")
+
+
+def test_consume_exchange_code_rejects_invalid() -> None:
+    with pytest.raises(HTTPException) as exc:
+        AuthService.consume_exchange_code("not-a-valid-code")
+    assert exc.value.status_code == 401
+
+
+def test_exchange_code_store_and_consume_roundtrip() -> None:
+    session = MagicMock()
+    service = AuthService(session)
+    login = LoginResponse(
+        user=AuthenticatedUserRead(
+            id=uuid.uuid4(),
+            company_id=uuid.uuid4(),
+            name="Test",
+            email="test@example.com",
+            roles=[],
+        ),
+        tokens=TokenPairRead(access_token="access", refresh_token="refresh", expires_in=60),
+    )
+    code = service.store_pending_login(login)
+    assert AuthService.consume_exchange_code(code) == login
+    with pytest.raises(HTTPException):
+        AuthService.consume_exchange_code(code)

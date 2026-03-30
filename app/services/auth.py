@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,10 +34,20 @@ class OidcStateEntry:
     created_at: datetime
 
 
+@dataclass(frozen=True)
+class PendingLoginExchange:
+    """One-time login payload for SPA handoff after browser SSO."""
+
+    login: LoginResponse
+    expires_at: datetime
+
+
 class AuthService:
     """Business logic for local and SSO authentication."""
 
     _state_store: dict[str, OidcStateEntry] = {}
+    _exchange_store: dict[str, PendingLoginExchange] = {}
+    _exchange_ttl = timedelta(minutes=5)
 
     def __init__(
         self,
@@ -199,6 +210,24 @@ class AuthService:
         )
         await self.session.commit()
         return await self._build_login_response(user)
+
+    def store_pending_login(self, login: LoginResponse) -> str:
+        """Store login result for one-time exchange; returns opaque code."""
+
+        code = secrets.token_urlsafe(32)
+        expires_at = datetime.now(UTC) + self._exchange_ttl
+        AuthService._exchange_store[code] = PendingLoginExchange(login=login, expires_at=expires_at)
+        return code
+
+    @classmethod
+    def consume_exchange_code(cls, code: str) -> LoginResponse:
+        """Redeem one-time code from SSO redirect; invalidates code."""
+
+        entry = cls._exchange_store.pop(code, None)
+        if entry is None or entry.expires_at <= datetime.now(UTC):
+            msg = "Invalid or expired exchange code."
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
+        return entry.login
 
     async def _build_login_response(self, user: User) -> LoginResponse:
         user.last_login_at = datetime.now(UTC)

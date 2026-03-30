@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import get_current_user
+from app.core.security import get_security_settings
 from app.db.session import get_db_session
 from app.schemas.auth import (
     AuthenticatedUserRead,
+    ExchangeCodeRequest,
     LoginRequest,
     LoginResponse,
     LogoutRequest,
@@ -59,6 +64,13 @@ async def me(current_user: AuthenticatedUserRead = Depends(get_current_user)) ->
     return current_user
 
 
+@router.post("/exchange", response_model=LoginResponse)
+async def exchange_sso_code(payload: ExchangeCodeRequest) -> LoginResponse:
+    """Exchange one-time code from SSO redirect for tokens (SPA)."""
+
+    return AuthService.consume_exchange_code(payload.code)
+
+
 @router.get("/sso/{provider}/start", response_model=SsoStartRead)
 async def sso_start(
     provider: str,
@@ -69,23 +81,41 @@ async def sso_start(
     return SsoStartRead(authorization_url=authorization_url, state=state)
 
 
-@router.get("/sso/{provider}/callback", response_model=LoginResponse)
+@router.get("/sso/{provider}/callback", response_model=None)
 async def sso_callback(
     provider: str,
     code: str,
     state: str,
     session: AsyncSession = Depends(get_db_session),
-) -> LoginResponse:
+) -> LoginResponse | RedirectResponse:
     service = AuthService(session)
     payload = SsoCallbackRequest(code=code, state=state)
-    return await service.sso_callback(provider=provider, code=payload.code, state=payload.state)
+    login = await service.sso_callback(provider=provider, code=payload.code, state=payload.state)
+    settings = get_security_settings()
+    if settings.frontend_url:
+        exchange_code = service.store_pending_login(login)
+        path = settings.frontend_sso_success_path
+        if not path.startswith("/"):
+            path = f"/{path}"
+        redirect_url = f"{settings.frontend_url.rstrip('/')}{path}?{urlencode({'code': exchange_code})}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+    return login
 
 
-@router.post("/sso/{provider}/callback", response_model=LoginResponse)
+@router.post("/sso/{provider}/callback", response_model=None)
 async def sso_callback_post(
     provider: str,
     payload: SsoCallbackRequest,
     session: AsyncSession = Depends(get_db_session),
-) -> LoginResponse:
+) -> LoginResponse | RedirectResponse:
     service = AuthService(session)
-    return await service.sso_callback(provider=provider, code=payload.code, state=payload.state)
+    login = await service.sso_callback(provider=provider, code=payload.code, state=payload.state)
+    settings = get_security_settings()
+    if settings.frontend_url:
+        exchange_code = service.store_pending_login(login)
+        path = settings.frontend_sso_success_path
+        if not path.startswith("/"):
+            path = f"/{path}"
+        redirect_url = f"{settings.frontend_url.rstrip('/')}{path}?{urlencode({'code': exchange_code})}"
+        return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+    return login

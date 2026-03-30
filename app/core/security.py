@@ -30,6 +30,8 @@ class SecuritySettings:
     oidc_microsoft_client_id: str | None
     oidc_microsoft_client_secret: str | None
     oidc_microsoft_redirect_uri: str | None
+    frontend_url: str | None
+    frontend_sso_success_path: str
 
 
 @lru_cache(maxsize=1)
@@ -56,4 +58,6 @@ def get_security_settings() -> SecuritySettings:
         oidc_microsoft_client_id=os.getenv("OIDC_MICROSOFT_CLIENT_ID"),
         oidc_microsoft_client_secret=os.getenv("OIDC_MICROSOFT_CLIENT_SECRET"),
         oidc_microsoft_redirect_uri=os.getenv("OIDC_MICROSOFT_REDIRECT_URI"),
+        frontend_url=(os.getenv("FRONTEND_URL") or None),
+        frontend_sso_success_path=os.getenv("FRONTEND_SSO_SUCCESS_PATH", "/auth/callback"),
     )

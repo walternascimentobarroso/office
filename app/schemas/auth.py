@@ -67,3 +67,9 @@ class SsoCallbackRequest(BaseModel):
 
     code: str = Field(min_length=1)
     state: str = Field(min_length=1)
+
+
+class ExchangeCodeRequest(BaseModel):
+    """Redeem one-time code after browser SSO redirect to frontend."""
+
+    code: str = Field(min_length=1)

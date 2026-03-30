@@ -276,6 +276,8 @@ Each report uses a **template** `.xlsx` and a **`mapping.json`** under `src/repo
 | `CORS_ALLOW_ORIGINS` | Allowed origins, comma-separated |
 | `OIDC_GOOGLE_CLIENT_ID` / `OIDC_GOOGLE_CLIENT_SECRET` / `OIDC_GOOGLE_REDIRECT_URI` | Google OIDC credentials |
 | `OIDC_MICROSOFT_CLIENT_ID` / `OIDC_MICROSOFT_CLIENT_SECRET` / `OIDC_MICROSOFT_REDIRECT_URI` | Microsoft OIDC credentials |
+| `FRONTEND_URL` | If set, SSO callback redirects the browser here with a one-time `code` query param |
+| `FRONTEND_SSO_SUCCESS_PATH` | Path on the frontend for that redirect (default `/auth/callback`) |
 
 ## Authentication endpoints
 
@@ -283,8 +285,9 @@ Each report uses a **template** `.xlsx` and a **`mapping.json`** under `src/repo
 - `POST /auth/refresh` - rotate refresh token
 - `POST /auth/logout` - revoke refresh token family
 - `GET /auth/me` - current authenticated user
+- `POST /auth/exchange` - exchange one-time `code` (from SSO redirect) for `user` + `tokens` JSON
 - `GET /auth/sso/{provider}/start` - OIDC login start URL
-- `GET/POST /auth/sso/{provider}/callback` - OIDC callback exchange
+- `GET/POST /auth/sso/{provider}/callback` - OIDC callback; if `FRONTEND_URL` is set, **302** to `{FRONTEND_URL}{FRONTEND_SSO_SUCCESS_PATH}?code=...`, else JSON `LoginResponse`
 
 ## Tests
 
