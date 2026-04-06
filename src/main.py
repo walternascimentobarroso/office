@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routers import (
     auth_router,
+    billing_router,
     companies_router,
     employees_router,
     monthly_workflow_router,
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(billing_router)
 app.include_router(companies_router)
 app.include_router(employees_router)
 app.include_router(report_types_router)

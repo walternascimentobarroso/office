@@ -1,6 +1,7 @@
 """Model exports for Alembic metadata discovery."""
 
 from app.models.company import Company
+from app.models.invoice_email_log import InvoiceEmailLog, InvoiceEmailStatus
 from app.models.daily_entry import DailyEntry
 from app.models.employee import Employee
 from app.models.mileage_entry import MileageEntry
@@ -19,6 +20,8 @@ from app.models.monthly_workflow import (
 
 __all__ = [
     "Company",
+    "InvoiceEmailLog",
+    "InvoiceEmailStatus",
     "DailyEntry",
     "Employee",
     "MileageEntry",
