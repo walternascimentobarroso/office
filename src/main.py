@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routers import (
+    assets_router,
     auth_router,
     billing_router,
     companies_router,
@@ -44,6 +45,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(billing_router)
 app.include_router(companies_router)
+app.include_router(assets_router)
 app.include_router(employees_router)
 app.include_router(report_types_router)
 app.include_router(roles_router)
@@ -70,6 +72,23 @@ async def request_validation_exception_handler(
     )
 
 
+def _http_error_payload(detail: object) -> dict:
+    """Normalize HTTPException.detail into a stable JSON shape."""
+
+    if isinstance(detail, dict):
+        code = str(detail.get("code", "HTTPError"))
+        payload: dict[str, object] = {
+            "error": code,
+            "message": str(detail.get("message", "Request failed")),
+        }
+        if "hint" in detail and detail["hint"] is not None:
+            payload["hint"] = str(detail["hint"])
+        return payload
+    if isinstance(detail, str):
+        return {"error": "HTTPError", "message": detail}
+    return {"error": "HTTPError", "message": str(detail)}
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle HTTP exceptions."""
@@ -77,7 +96,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     _ = request
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": "HTTPError", "message": exc.detail},
+        content=_http_error_payload(exc.detail),
     )
 
 
