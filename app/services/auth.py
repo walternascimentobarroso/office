@@ -170,15 +170,39 @@ class AuthService:
         client = self._provider_or_404(provider)
         state_entry = self._state_store.get(state)
         if state_entry is None or state_entry.provider != provider:
-            msg = "Invalid state."
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "SSO_INVALID_STATE",
+                    "message": (
+                        "OAuth state is missing, expired, or was already used. "
+                        "Start sign-in again from the application."
+                    ),
+                    "hint": (
+                        "Common causes: API server restarted; multiple workers "
+                        "(use a single process in development); or reusing an old "
+                        "callback URL. Production should store OAuth state in Redis or the database."
+                    ),
+                },
+            )
         self._state_store.pop(state, None)
 
         try:
             profile = await client.exchange_code(code=code)
         except Exception as exc:  # noqa: BLE001
-            msg = "SSO callback exchange failed."
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg) from exc
+            detail: dict[str, str] = {
+                "code": "SSO_TOKEN_EXCHANGE_FAILED",
+                "message": (
+                    "Could not exchange the authorization code with the identity provider. "
+                    "Check redirect URI and client credentials."
+                ),
+            }
+            if str(exc):
+                detail["hint"] = str(exc)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=detail,
+            ) from exc
 
         provider_subject = profile["provider_subject"]
         email = profile["email"].lower()

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.asset import Asset
     from app.models.employee import Employee
     from app.models.report import Report
     from app.models.user import User
@@ -24,6 +25,11 @@ class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     tax_id: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    assets: Mapped[list["Asset"]] = relationship(
+        back_populates="company",
+        cascade="save-update, merge",
+        lazy="selectin",
+    )
     employees: Mapped[list["Employee"]] = relationship(
         back_populates="company",
         cascade="save-update, merge",

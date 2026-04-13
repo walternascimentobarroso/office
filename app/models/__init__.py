@@ -1,5 +1,6 @@
 """Model exports for Alembic metadata discovery."""
 
+from app.models.asset import Asset, AssetCategory, AssetStatus
 from app.models.company import Company
 from app.models.invoice_email_log import InvoiceEmailLog, InvoiceEmailStatus
 from app.models.daily_entry import DailyEntry
@@ -19,6 +20,9 @@ from app.models.monthly_workflow import (
 )
 
 __all__ = [
+    "Asset",
+    "AssetCategory",
+    "AssetStatus",
     "Company",
     "InvoiceEmailLog",
     "InvoiceEmailStatus",
