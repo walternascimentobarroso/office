@@ -5,7 +5,8 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 
-from fastapi import Depends, Header, HTTPException, Path, status
+from fastapi import Depends, HTTPException, Path, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
@@ -13,38 +14,24 @@ from app.schemas.auth import AuthenticatedUserRead
 from app.services.auth import AuthService
 from app.services.token import TokenService
 
-
-def _extract_bearer_token(authorization: str | None) -> str:
-    if not authorization:
-        msg = "Missing Authorization header."
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
-    prefix = "Bearer "
-    if not authorization.startswith(prefix):
-        msg = "Authorization header must use Bearer token."
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
-    token = authorization[len(prefix) :].strip()
-    if not token:
-        msg = "Missing bearer token."
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=msg)
-    return token
+_bearer_scheme = HTTPBearer()
 
 
 async def get_current_user(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
     session: AsyncSession = Depends(get_db_session),
 ) -> AuthenticatedUserRead:
     """Resolve currently authenticated user from bearer token."""
 
-    token = _extract_bearer_token(authorization)
-    return await AuthService(session).me(token)
+    return await AuthService(session).me(credentials.credentials)
 
 
 async def get_current_token_payload(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
 ) -> tuple[uuid.UUID, uuid.UUID, list[str]]:
     """Return (user_id, company_id, roles) from access token."""
 
-    token = _extract_bearer_token(authorization)
+    token = credentials.credentials
     token_service = TokenService()
     try:
         payload = token_service.decode_token(token)
