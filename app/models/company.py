@@ -12,7 +12,9 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 if TYPE_CHECKING:
     from app.models.asset import Asset
     from app.models.employee import Employee
+    from app.models.product import Product
     from app.models.report import Report
+    from app.models.supplier import Supplier
     from app.models.user import User
 
 
@@ -36,6 +38,16 @@ class Company(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         lazy="selectin",
     )
     users: Mapped[list["User"]] = relationship(
+        back_populates="company",
+        cascade="save-update, merge",
+        lazy="selectin",
+    )
+    products: Mapped[list["Product"]] = relationship(
+        back_populates="company",
+        cascade="save-update, merge",
+        lazy="selectin",
+    )
+    suppliers: Mapped[list["Supplier"]] = relationship(
         back_populates="company",
         cascade="save-update, merge",
         lazy="selectin",

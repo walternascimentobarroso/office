@@ -1,6 +1,8 @@
 """Router exports."""
 
 from app.api.routers.assets import router as assets_router
+from app.api.routers.products import router as products_router
+from app.api.routers.suppliers import router as suppliers_router
 from app.api.routers.auth import router as auth_router
 from app.api.routers.billing import router as billing_router
 from app.api.routers.companies import router as companies_router
@@ -15,6 +17,8 @@ from app.api.routers.users import router as users_router
 
 __all__ = [
     "assets_router",
+    "products_router",
+    "suppliers_router",
     "auth_router",
     "billing_router",
     "companies_router",

@@ -37,6 +37,11 @@ def _object_key(company_id: uuid.UUID, asset_id: uuid.UUID, filename: str) -> st
     return f"companies/{company_id}/assets/{asset_id}/invoice/{safe}"
 
 
+def _product_image_key(company_id: uuid.UUID, product_id: uuid.UUID, filename: str) -> str:
+    safe = _sanitize_filename(filename)
+    return f"companies/{company_id}/products/{product_id}/image/{safe}"
+
+
 def _public_url_s3(settings: StorageSettings, key: str) -> str | None:
     if not settings.public_base_url:
         return None
@@ -98,6 +103,55 @@ class ObjectStorageService:
 
             public: str | None = None
             await asyncio.to_thread(_write)
+            if self._settings.local_public_base_url:
+                public = f"{self._settings.local_public_base_url}/{key}"
+            return key, public
+
+        extra: dict[str, str] = {}
+        if content_type:
+            extra["ContentType"] = content_type
+
+        def _put() -> None:
+            client = _build_client(self._settings)
+            client.put_object(
+                Bucket=self._settings.bucket,
+                Key=key,
+                Body=content,
+                **extra,
+            )
+
+        await asyncio.to_thread(_put)
+        return key, _public_url_s3(self._settings, key)
+
+    async def upload_product_image(
+        self,
+        *,
+        company_id: uuid.UUID,
+        product_id: uuid.UUID,
+        filename: str,
+        content: bytes,
+        content_type: str | None,
+    ) -> tuple[str, str | None]:
+        """Upload product image bytes; return (storage_key, public_url_or_none)."""
+
+        _ = content_type
+        if not self.is_ready():
+            msg = "Storage is not configured."
+            raise RuntimeError(msg)
+
+        key = _product_image_key(company_id, product_id, filename)
+
+        if self._settings.backend == "local":
+            root = self._settings.local_root
+            if root is None:
+                msg = "Local storage root is not set."
+                raise RuntimeError(msg)
+
+            def _write() -> None:
+                _upload_local(root=root, key=key, content=content)
+
+            await asyncio.to_thread(_write)
+            public: str | None = None
             if self._settings.local_public_base_url:
                 public = f"{self._settings.local_public_base_url}/{key}"
             return key, public

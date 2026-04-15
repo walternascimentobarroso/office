@@ -8,6 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routers import (
     assets_router,
@@ -16,12 +17,15 @@ from app.api.routers import (
     companies_router,
     employees_router,
     monthly_workflow_router,
+    products_router,
     report_types_router,
     roles_router,
+    suppliers_router,
     users_router,
     workflow_templates_router,
 )
 from app.core.security import get_security_settings
+from app.core.storage_settings import get_storage_settings
 from src.core.config import get_config
 from src.logging_config import setup_logging
 
@@ -42,10 +46,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_storage = get_storage_settings()
+if _storage.backend == "local" and _storage.local_root is not None:
+    _storage.local_root.mkdir(parents=True, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=str(_storage.local_root)), name="uploads")
+
 app.include_router(auth_router)
 app.include_router(billing_router)
 app.include_router(companies_router)
 app.include_router(assets_router)
+app.include_router(products_router)
+app.include_router(suppliers_router)
 app.include_router(employees_router)
 app.include_router(report_types_router)
 app.include_router(roles_router)

@@ -289,6 +289,16 @@ Each report uses a **template** `.xlsx` and a **`mapping.json`** under `src/repo
 - `GET /auth/sso/{provider}/start` - OIDC login start URL
 - `GET/POST /auth/sso/{provider}/callback` - OIDC callback; if `FRONTEND_URL` is set, **302** to `{FRONTEND_URL}{FRONTEND_SSO_SUCCESS_PATH}?code=...`, else JSON `LoginResponse`
 
+## Test credentials
+
+| Field | Value |
+|-------|-------|
+| **Email** | `admin.test@office.local` |
+| **Password** | `Office@2026` |
+| **Role** | `admin` |
+
+Use these credentials with `POST /auth/login` (pass `company_id`, `email`, `password`).
+
 ## Tests
 
 ```bash
